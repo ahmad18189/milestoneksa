@@ -1,0 +1,8 @@
+/* Resize the login logo */
+.page-card-head img.app-logo {
+    max-height: 200px !important;
+    max-width: 200px !important;
+    height: auto !important;
+    display: block;
+    margin: 0 auto;
+}

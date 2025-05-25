@@ -1,0 +1,83 @@
+# milestoneksa/milestoneksa/purchase_order.py
+
+import frappe
+from frappe.utils import nowdate
+
+@frappe.whitelist()
+def generate_payment_tasks(name):
+    """
+    Called via JS RPC to generate tasks without submit.
+    """
+    doc = frappe.get_doc("Purchase Order", name)
+    _create_tasks(doc)
+
+
+@frappe.whitelist()
+def create_payment_tasks(doc, method):
+    """
+    Create a Task for each payment schedule row on Purchase Order submit or via RPC.
+    """
+    today = nowdate()
+
+    # Resolve Project: header field or first item's project
+    project = doc.project or next((item.project for item in doc.items if item.project), None)
+    if not project:
+        frappe.throw("Please select a Project on this Purchase Order or on at least one item.")
+
+    created, skipped = 0, 0
+
+    for row in doc.payment_schedule:
+        # Skip if task already linked
+        if row.task:
+            skipped += 1
+            continue
+
+        # Validate payment amount
+        if (row.payment_amount or 0) <= 0:
+            frappe.log_error(f"Line {row.idx}: payment_amount ≤ 0", "milestoneksa")
+            skipped += 1
+            continue
+
+        # Validate due date
+        if row.due_date < today:
+            frappe.log_error(f"Line {row.idx}: due_date {row.due_date} is in the past", "milestoneksa")
+            skipped += 1
+            continue
+
+        # Determine start date from header schedule_date or transaction_date
+        start_date = doc.get("schedule_date") or doc.transaction_date or today
+
+        # Build Task payload
+        task_data = {
+            "doctype": "Task",
+            "project": project,
+            "subject": f"PO {doc.name} – {row.description} -  payment due (line {row.idx})",
+            "description": (
+                f"Purchase Order: {doc.name}\n"
+                f"Description: {row.description}\n"
+                f"Amount: {row.payment_amount}\n"
+                f"Due date: {row.due_date}"
+            ),
+            "status": "Open",
+            "exp_start_date": start_date,
+            "exp_end_date": row.due_date,
+            "expected_time": row.get("estimated_hours") or 0
+        }
+
+        # Insert Task and link back to payment schedule row
+        try:
+            task = frappe.get_doc(task_data).insert(ignore_permissions=True)
+            frappe.db.set_value(
+                "Payment Schedule",
+                row.name,
+                "task",
+                task.name,
+                update_modified=False
+            )
+            created += 1
+        except Exception as e:
+            frappe.msgprint(f"Could not create Task for line {row.idx}: {e}")
+            skipped += 1
+
+    # Final feedback
+    frappe.msgprint(f"✅ {created} tasks created, {skipped} rows skipped.")

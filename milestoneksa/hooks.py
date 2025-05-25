@@ -4,6 +4,31 @@ app_publisher = "ahmed"
 app_description = "milestoneksa customizations"
 app_email = "ahmed@milestoneksa.com"
 app_license = "mit"
+website_include_css = "/assets/milestoneksa/css/login.css"
+app_include_js = "/assets/milestoneksa/js/purchase_order.js"
+doc_events = {
+    "Purchase Order": {
+        "on_submit": "milestoneksa.milestoneksa.purchase_order.create_payment_tasks"
+    }
+}
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["module", "=", "Milestoneksa"]
+        ]
+    }
+]
+app_include_css = [
+    "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.css",
+]
+app_include_js = [
+    "/assets/milestoneksa/js/purchase_order.js",
+    "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.umd.min.js",
+]
+page_css = {
+    "project_dashboard": "milestoneksa/css/project_dashboard.css"
+}
 
 # Apps
 # ------------------

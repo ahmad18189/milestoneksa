@@ -1,0 +1,33 @@
+/* project_dashboard.css */
+
+/* Make the Gantt area a fixed height with horizontal scrolling */
+#gantt-container {
+    height: 400px;
+    overflow-x: auto;
+    margin-top: 20px;
+    border: 1px solid #e0e0e0;
+  }
+  
+  /* Row of two charts side by side */
+  .chart-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  
+  /* Each individual chart block */
+  .chart-block {
+    flex: 1 1 45%;
+    min-width: 280px;
+    height: 260px;    /* fix height so pies/bars render at a uniform size */
+  }
+  
+  /* If you have a 2nd row of charts, same rules apply */
+  .chart-row-2 {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  

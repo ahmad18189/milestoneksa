@@ -1,0 +1,55 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-08-19 08:34:08.813649",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sponsorship_by",
+  "sponsorship_start_date",
+  "sponsorship_end_date",
+  "sponsorship_cost"
+ ],
+ "fields": [
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "sponsorship_by",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Sponsorship By"
+  },
+  {
+   "fieldname": "sponsorship_start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Sponsorship Start Date"
+  },
+  {
+   "fieldname": "sponsorship_end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Sponsorship End Date"
+  },
+  {
+   "fieldname": "sponsorship_cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Sponsorship Cost"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-08-19 08:36:30.773679",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Sponsorship Transfer",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -100,7 +100,9 @@ function renderGanttChart(tasks, view_mode = 'Month') {
         start: t.exp_start_date || frappe.datetime.get_today(),
         end: t.exp_end_date || t.exp_start_date || frappe.datetime.get_today(),
         progress: (t.status === 'Completed' ? 100 : (t.progress || 0)),
-        dependencies: (t.depends_on_tasks || []).join(',')
+       dependencies: Array.isArray(t.depends_on_tasks)
+        ? t.depends_on_tasks.join(',')
+        : (typeof t.depends_on_tasks === 'string' ? t.depends_on_tasks : '')
     }));
 
     $('#gantt-container').empty();

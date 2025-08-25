@@ -18,6 +18,8 @@ def _create_tasks(doc):
 
     created, skipped = 0, 0
     skip_messages = []
+    if not doc.payment_schedule:
+        return
 
     for row in doc.payment_schedule:
         # Skip if already linked
@@ -57,7 +59,7 @@ def _create_tasks(doc):
         task_data = {
             "doctype": "Task",
             "project": project,
-            "subject": subject,
+            "subject": project+" - "+row.description,
             "description": (
                 f"Purchase Order: {doc.name}\n"
                 f"Description: {row.description}\n"

@@ -5,11 +5,13 @@ app_description = "milestoneksa customizations"
 app_email = "ahmed@milestoneksa.com"
 app_license = "mit"
 website_include_css = "/assets/milestoneksa/css/login.css"
-app_include_js = "/assets/milestoneksa/js/purchase_order.js"
 doc_events = {
     "Purchase Order": {
         "on_submit": "milestoneksa.milestoneksa.purchase_order.create_payment_tasks"
     }
+}
+doctype_js = {
+	"Employee": "public/js/employee_assets.js",
 }
 fixtures = [
     {
@@ -24,12 +26,25 @@ app_include_css = [
 ]
 app_include_js = [
     "/assets/milestoneksa/js/purchase_order.js",
+    "assets/milestoneksa/js/setup_quick_checkin.js",
+    "assets/milestoneksa/js/test_time_dialog.js",
+    "assets/milestoneksa/js/test_fields_dialog.js",
+    #"/assets/milestoneksa/js/fix_task_gantt_scroll.js",
+    #"/assets/milestoneksa/js/task_gantt_config.js",
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.umd.min.js",
 ]
 page_css = {
     "project_dashboard": "milestoneksa/css/project_dashboard.css"
 }
 
+doc_events = {
+	"Employee": {
+		"validate": "milestoneksa.api.employee.validate_employee",
+	},
+ 	"Salary Structure": {
+		"on_submit": "milestoneksa.events.payroll.payroll.create_ssa_on_submit",
+	}
+}
 # Apps
 # ------------------
 

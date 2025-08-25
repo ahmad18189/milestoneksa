@@ -16,8 +16,8 @@ frappe.ui.form.on('Purchase Order', {
     });
 
     // Populate Payment Schedule from Items (draft only)
-    if (frm.doc.docstatus === 0) {
-      frm.fields_dict.payment_schedule.grid.add_custom_button(
+   // if (frm.doc.docstatus === 1) {
+      frm.add_custom_button(
         __('Populate From Items'),
         function() {
           if (!frm.doc.items || frm.doc.items.length === 0) {
@@ -47,6 +47,6 @@ frappe.ui.form.on('Purchase Order', {
           frappe.msgprint(__('Payment Schedule populated sequentially from posting date.'));
         }
       );
-    }
+    //}
   }
 });

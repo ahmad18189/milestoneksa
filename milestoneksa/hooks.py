@@ -5,27 +5,30 @@ app_description = "milestoneksa customizations"
 app_email = "ahmed@milestoneksa.com"
 app_license = "mit"
 website_include_css = "/assets/milestoneksa/css/login.css"
+
 doc_events = {
     "Purchase Order": {
         "on_submit": "milestoneksa.milestoneksa.purchase_order.create_payment_tasks"
     }
 }
 doctype_js = {
-	"Employee": "public/js/employee_assets.js",
+	"Employee": ["public/js/employee_assets.js","public/js/employee_salary_ui.js"]
 }
 fixtures = [
-    {
-        "dt": "Custom Field",
-        "filters": [
-            ["module", "=", "Milestoneksa"]
-        ]
-    }
+    {"doctype": "Custom Field"},
+    {"doctype": "Client Script"},
+    {"doctype": "Server Script"},
+    # Warning: Translation without filters can be VERY large.
+    {"doctype": "Translation"},
 ]
 app_include_css = [
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.css",
+    "/assets/milestoneksa/css/quick_checkin.css",
+    "/assets/milestoneksa/css/font.css"
 ]
 app_include_js = [
     "/assets/milestoneksa/js/purchase_order.js",
+    "assets/milestoneksa/js/report_pdf_button.js",
     "assets/milestoneksa/js/setup_quick_checkin.js",
     "assets/milestoneksa/js/test_time_dialog.js",
     "assets/milestoneksa/js/test_fields_dialog.js",

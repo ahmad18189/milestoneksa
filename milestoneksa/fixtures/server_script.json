@@ -1,0 +1,21 @@
+[
+ {
+  "allow_guest": 0,
+  "api_method": null,
+  "cron_format": null,
+  "disabled": 1,
+  "docstatus": 0,
+  "doctype": "Server Script",
+  "doctype_event": "Before Validate",
+  "enable_rate_limit": 0,
+  "event_frequency": "All",
+  "modified": "2025-08-19 09:11:08.861811",
+  "module": "Milestoneksa",
+  "name": "Employee code",
+  "rate_limit_count": 5,
+  "rate_limit_seconds": 86400,
+  "reference_doctype": "Employee",
+  "script": "from frappe.utils import getdate, flt\n\ncompute_residence_total(doc)\nvalidate_residence_dates(doc)\nvalidate_sponsorship_dates(doc)\n\n\ndef compute_residence_total(doc):\n\t\"\"\"Recalculate total from child rows and set custom_total_cost.\"\"\"\n\ttotal = 0.0\n\tfor row in (doc.custom_residence_costs or []):\n\t\ttotal += flt(getattr(row, \"amount\", 0), 2)\n\tdoc.custom_total_cost = total\n\n\ndef validate_residence_dates(doc):\n\t\"\"\"Validate Employee custom residence start/end dates on the parent doc.\"\"\"\n\tstart = getattr(doc, \"custom_residence_start_date\", None)\n\tend = getattr(doc, \"custom_residence_end_date\", None)\n\n\t# If either is set, both must be set\n\tif bool(start) ^ bool(end):\n\t\tfrappe.throw(_(\"Residence period is incomplete. Please set both Start and End dates.\"))\n\n\tif start and end:\n\t\ts = getdate(start)\n\t\te = getdate(end)\n\t\tif e < s:\n\t\t\tfrappe.throw(\n\t\t\t\t_(\"Residence End Date cannot be before Start Date (Start: {0}, End: {1}).\")\n\t\t\t\t.format(s.strftime(\"%Y-%m-%d\"), e.strftime(\"%Y-%m-%d\"))\n\t\t\t)\n\n\ndef validate_sponsorship_dates(doc):\n\t\"\"\"\n\tValidate child 'Sponsorship Transfer' rows:\n\t- Required dates per row\n\t- End >= Start per row\n\t- No overlapping periods across rows (inclusive check)\n\t\"\"\"\n\trows = list(doc.get(\"custom_sponsorship_transfer\") or [])\n\tif not rows:\n\t\treturn\n\n\t# Per-row required & range checks\n\tfor r in rows:\n\t\tif not r.sponsorship_start_date or not r.sponsorship_end_date:\n\t\t\tfrappe.throw(_(\"Row #{0}: Sponsorship Start and End dates are required.\").format(r.idx))\n\n\t\ts = getdate(r.sponsorship_start_date)\n\t\te = getdate(r.sponsorship_end_date)\n\t\tif e < s:\n\t\t\tfrappe.throw(\n\t\t\t\t_(\"Row #{0}: Sponsorship End Date cannot be before Start Date (Start: {1}, End: {2}).\")\n\t\t\t\t.format(r.idx, s.strftime(\"%Y-%m-%d\"), e.strftime(\"%Y-%m-%d\"))\n\t\t\t)\n\n\t# Overlap detection (sort by start date, then ensure each starts after the previous ends)\n\tsortable = [\n\t\t(getdate(r.sponsorship_start_date), getdate(r.sponsorship_end_date), r)\n\t\tfor r in rows\n\t]\n\tsortable.sort(key=lambda x: (x[0], x[1]))\n\n\tprev_end = None\n\tprev_row = None\n\tfor s, e, r in sortable:\n\t\tif prev_end and s <= prev_end:\n\t\t\t# Overlap found (inclusive): current start is on/before previous end\n\t\t\tfrappe.throw(\n\t\t\t\t_(\"Sponsorship periods overlap between Row #{0} (ends {1}) and Row #{2} (starts {3}). \"\n\t\t\t\t  \"Please adjust the dates.\")\n\t\t\t\t.format(\n\t\t\t\t\tprev_row.idx,\n\t\t\t\t\tprev_end.strftime(\"%Y-%m-%d\"),\n\t\t\t\t\tr.idx,\n\t\t\t\t\ts.strftime(\"%Y-%m-%d\")\n\t\t\t\t)\n\t\t\t)\n\t\tprev_end = e\n\t\tprev_row = r\n\n\t# OPTIONAL: require residence period be covered by at least one sponsorship period\n\t# Uncomment if desired.\n\t# res_start = getattr(doc, \"custom_residence_start_date\", None)\n\t# res_end = getattr(doc, \"custom_residence_end_date\", None)\n\t# if res_start and res_end:\n\t# \trs, re = getdate(res_start), getdate(res_end)\n\t# \tcovered = any((s <= rs and re <= e) for s, e, _ in sortable)\n\t# \tif not covered:\n\t# \t\tfrappe.throw(\n\t# \t\t\t_(\"Residence period ({0} → {1}) is not fully covered by any single Sponsorship Transfer period.\")\n\t# \t\t\t.format(rs.strftime(\"%Y-%m-%d\"), re.strftime(\"%Y-%m-%d\"))\n\t# \t\t)\n",
+  "script_type": "DocType Event"
+ }
+]

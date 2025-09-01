@@ -1,4 +1,4 @@
-// milestoneksa/public/js/setup_quick_checkin.js
+// milestoneksa/public/js/setup_quick_checkin.js`aaaaaaaa
 frappe.provide("frappe.ui.toolbar");
 
 frappe.ui.toolbar.setup_quick_checkin = function () {

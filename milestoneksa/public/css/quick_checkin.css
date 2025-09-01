@@ -1,0 +1,267 @@
+/* public/css/quick_checkin.css */
+
+/* ======================== Layout & Basics ======================== */
+.mksa-qc { background: transparent; }
+.mksa-qc .row { display:flex; gap:16px; flex-wrap:wrap; }
+.mksa-qc .col { flex:1 1 360px; min-width:300px; }
+
+.mksa-qc .card {
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  background:#ffffff;
+  box-shadow: 0 8px 24px rgba(2, 8, 20, 0.06);
+  padding:16px;
+}
+
+.mksa-qc .title {
+  font-weight:800;
+  font-size:16px;
+  color:#0f172a;
+  margin-bottom:10px;
+  letter-spacing:.1px;
+}
+
+.mksa-qc .muted { color:#64748b; font-size:12px; }
+.mksa-qc .btn-lg { padding:12px 14px; font-size:14px; font-weight:700; }
+
+.mksa-qc .filters {
+  display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin: 0 0 16px;
+}
+
+.mksa-qc .filters .group { display:flex; flex-direction:column; gap:6px; }
+
+.mksa-qc label {
+  font-size:12px; color:#0f172a; font-weight:700; letter-spacing:.2px;
+}
+
+.mksa-qc input[type="date"] {
+  padding:8px 10px;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  color:#0f172a;
+  background:#ffffff;
+  box-shadow: 0 1px 2px rgba(2,8,20,.04) inset;
+}
+
+.mksa-qc .btn-default {
+  background:#f8fafc; border:1px solid #e2e8f0; color:#0f172a;
+}
+.mksa-qc .btn-default:hover { background:#eef2f7; }
+
+/* ============================ Pills ============================= */
+.mksa-qc .pill{
+  --pill-bg:#F8FAFC; --pill-fg:#0F172A; --pill-border:#E2E8F0;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:6px 12px; border-radius:999px;
+  font-size:12px; font-weight:700;
+  background:var(--pill-bg); color:var(--pill-fg); border:1px solid var(--pill-border);
+  letter-spacing:.2px;
+}
+.mksa-qc .pill--neutral{ --pill-bg:#F8FAFC; --pill-fg:#0F172A; --pill-border:#E2E8F0; }
+.mksa-qc .pill--info   { --pill-bg:#E0EAFF; --pill-fg:#1E3A8A; --pill-border:#93C5FD; }
+.mksa-qc .pill--success{ --pill-bg:#D1FAE5; --pill-fg:#065F46; --pill-border:#34D399; }
+.mksa-qc .pill--warning{ --pill-bg:#FEF3C7; --pill-fg:#92400E; --pill-border:#FBBF24; }
+.mksa-qc .pill--danger { --pill-bg:#FEE2E2; --pill-fg:#991B1B; --pill-border:#FCA5A5; }
+
+/* ============================== Map ============================= */
+.mksa-map {
+  border:4px solid #e5e7eb; border-radius:12px; overflow:hidden;
+  width:100%; height:220px;
+}
+
+/* =========================== Calendar =========================== */
+.mksa-cal { display:grid; gap:12px; }
+
+.mksa-cal-month {
+  border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;
+}
+
+.mksa-cal-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px; background:#f8fafc; border-bottom:1px solid #e5e7eb;
+}
+.mksa-cal-header .month-title { font-weight:800; color:#0f172a; }
+
+.mksa-cal-grid { display:grid; grid-template-columns: repeat(7, 1fr); }
+.mksa-cal-dow, .mksa-cal-day {
+  padding:8px; border-bottom:1px solid #f1f5f9; border-right:1px solid #f1f5f9; min-height:72px;
+}
+.mksa-cal-grid > :nth-child(7n) { border-right:none; }
+
+.mksa-cal-dow { font-size:11px; font-weight:700; color:#475569; background:#f8fafc; }
+
+.mksa-cal-day {
+  position:relative; background:#ffffff; box-sizing:border-box;
+}
+.mksa-cal-day.out { background:#fafafa; color:#94a3b8; }
+
+.mksa-cal-day .date-num {
+  position:absolute; top:6px; right:8px; font-size:12px; font-weight:800; z-index:2;
+}
+
+/* === Bright status fills & badges (z-layered) === */
+.mksa-status-fill{
+  position:absolute;
+  inset:8px; top:8px; left:8px; right:8px; bottom:8px; /* Safari fallback */
+  border-radius:8px; border:1px solid transparent;
+  z-index:1; /* below badges/date */
+}
+
+/* Keys from JS: present, absent, onleave, halfday, wfh, none */
+.mksa-status-fill.status-present { background:#e0f2fe; border-color:#0284c7; }  /* Present (blue) */
+.mksa-status-fill.status-absent  { background:#fee2e2; border-color:#ef4444; }  /* Absent (red) */
+.mksa-status-fill.status-onleave { background:#dbeafe; border-color:#3b82f6; }  /* On Leave (light blue) */
+.mksa-status-fill.status-halfday { background:#fed7aa; border-color:#f97316; }  /* Half Day (reddish-orange) */
+.mksa-status-fill.status-wfh     { background:#c7d2fe; border-color:#1e3a8a; }  /* Work From Home (dark blue family) */
+.mksa-status-fill.status-none    { background:#f3f4f6; border-color:#cbd5e1; }  /* Not recorded (gray) */
+
+/* Status text badge */
+.mksa-status-badge{
+  position:absolute; left:8px; top:8px;
+  font-size:11px; font-weight:700; color:#0f172a;
+  background:rgba(255,255,255,0.7);
+  padding:2px 6px; border-radius:6px; border:1px solid #e5e7eb;
+  backdrop-filter: blur(2px);
+  z-index:2;
+}
+
+/* Late / Early chips (bottom-left) */
+.mksa-chips{
+  position:absolute; left:8px; bottom:8px; display:flex; gap:6px; flex-wrap:wrap;
+  z-index:2;
+}
+.mksa-chip{
+  font-size:10px; font-weight:700; padding:2px 6px; border-radius:999px; border:1px solid transparent;
+  color:#111827; background:#f3f4f6;
+}
+.mksa-chip.chip-late  { background:#fde68a; border-color:#f59e0b; } /* yellow */
+.mksa-chip.chip-early { background:#fdba74; border-color:#ea580c; } /* orange */
+
+/* ======================= Legend (static) ======================== */
+.mksa-cal-legend {
+  display:flex; flex-wrap:wrap; gap:10px; padding:8px 12px; font-size:12px; color:#334155; background:#ffffff;
+}
+.mksa-leg-item { display:inline-flex; align-items:center; gap:6px; }
+.mksa-leg-swatch { width:12px; height:12px; border-radius:3px; border:1px solid #e5e7eb; }
+.mksa-leg-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+/* =========================== Dark Theme ========================= */
+.mksa-qc[data-theme="dark"] .card { background:#111827; border-color:#1f2937; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.mksa-qc[data-theme="dark"] .title { color:#e5e7eb; }
+.mksa-qc[data-theme="dark"] .muted { color:#9ca3af; }
+.mksa-qc[data-theme="dark"] input[type="date"] { background:#0b1220; color:#e5e7eb; border-color:#374151; }
+.mksa-qc[data-theme="dark"] .btn-default { background:#0b1220; border-color:#374151; color:#e5e7eb; }
+.mksa-qc[data-theme="dark"] .btn-default:hover { background:#0f172a; }
+
+.mksa-qc[data-theme="dark"] .pill--neutral{ --pill-bg:#1F2937; --pill-fg:#E5E7EB; --pill-border:#374151; }
+.mksa-qc[data-theme="dark"] .pill--info   { --pill-bg:#1E1B4B; --pill-fg:#C7D2FE; --pill-border:#3730A3; }
+.mksa-qc[data-theme="dark"] .pill--success{ --pill-bg:#052E2B; --pill-fg:#A7F3D0; --pill-border:#065F46; }
+.mksa-qc[data-theme="dark"] .pill--warning{ --pill-bg:#3B2F0B; --pill-fg:#FDE68A; --pill-border:#92400E; }
+.mksa-qc[data-theme="dark"] .pill--danger { --pill-bg:#3B0D0C; --pill-fg:#FECACA; --pill-border:#991B1B; }
+
+.mksa-qc[data-theme="dark"] .mksa-cal-month { border-color:#1f2937; }
+.mksa-qc[data-theme="dark"] .mksa-cal-header { background:#0b1220; border-bottom-color:#1f2937; }
+.mksa-qc[data-theme="dark"] .mksa-cal-header .month-title { color:#e5e7eb; }
+.mksa-qc[data-theme="dark"] .mksa-cal-dow { background:#0b1220; color:#a1a1aa; border-bottom-color:#1f2937; }
+.mksa-qc[data-theme="dark"] .mksa-cal-day { background:#111827; border-bottom-color:#1f2937; }
+.mksa-qc[data-theme="dark"] .mksa-cal-day.out { background:#0b1220; color:#6b7280; }
+.mksa-qc[data-theme="dark"] .mksa-cal-legend { background:#111827; color:#e5e7eb; }
+
+.mksa-qc[data-theme="dark"] .mksa-status-badge {
+  color:#e5e7eb; background: rgba(17,24,39,0.55); border-color:#374151;
+}
+.mksa-qc[data-theme="dark"] .mksa-chip { color:#e5e7eb; background:#374151; border-color:#4b5563; }
+.mksa-qc[data-theme="dark"] .mksa-chip.chip-late  { background:#f59e0b22; border-color:#f59e0b; color:#fde68a; }
+.mksa-qc[data-theme="dark"] .mksa-chip.chip-early { background:#ea580c22; border-color:#ea580c; color:#fdba74; }
+
+/* =========================== Responsive ========================= */
+@media (max-width: 480px){
+  .mksa-qc .col { min-width: 100%; }
+}
+/* Centered status pill overlay */
+.mksa-status-center{
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  z-index:2; pointer-events:none; /* whole cell is clickable */
+}
+.mksa-status-pill{
+  font-size:11px; font-weight:800; letter-spacing:.2px;
+  padding:4px 8px; border-radius:999px;
+  color:#0f172a; background:rgba(255,255,255,0.85);
+  border:1px solid #e5e7eb; max-width:92%;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* Make cells clearly clickable */
+.mksa-cal-day.is-clickable{ cursor:pointer; }
+
+/* Responsive tweaks */
+@media (max-width: 768px){
+  .mksa-cal-dow, .mksa-cal-day{ min-height:64px; }
+  .mksa-status-pill{ font-size:10px; padding:3px 6px; }
+  .mksa-cal-day .date-num{ font-size:11px; }
+}
+@media (max-width: 480px){
+  .mksa-cal-dow, .mksa-cal-day{ min-height:56px; }
+  .mksa-status-pill{ font-size:9px; padding:2px 6px; }
+  .mksa-chips{ gap:4px; }
+}
+/* === Bigger cells + centered, wrapping status pill === */
+
+/* Make each day taller by default */
+.mksa-cal-grid {
+  /* ensure uniform row height; browsers that don't support grid-auto-rows
+     will still get min-height from .mksa-cal-day */
+  grid-auto-rows: minmax(110px, auto);
+}
+
+/* safety: increase day min-height as well */
+.mksa-cal-day { min-height: 110px; }
+
+/* keep date number visible above everything */
+.mksa-cal-day .date-num { z-index: 3; }
+
+/* Center container with padding to avoid clashing with date (top) and chips (bottom) */
+.mksa-status-center{
+  position:absolute; inset:0;
+  padding: 20px 8px 28px;           /* top / sides / bottom spacing */
+  display:flex; align-items:center; justify-content:center;
+  z-index:2; pointer-events:none;   /* cell remains clickable */
+}
+
+/* Smaller pill + wrap text instead of ellipsis */
+.mksa-status-pill{
+  font-size: 10.5px;
+  line-height: 1.2;
+  padding: 4px 6px;
+  border-radius: 10px;
+  color:#0f172a;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid #e5e7eb;
+
+  max-width: 95%;
+  white-space: normal;              /* allow wrapping */
+  overflow-wrap: anywhere;          /* break long words */
+  text-align: center;
+}
+
+/* Keep chips small so they don’t crowd */
+.mksa-chips { gap: 6px; }
+.mksa-chip  { font-size: 10px; padding: 2px 6px; }
+
+/* --- Responsive tweaks --- */
+@media (max-width: 768px){
+  .mksa-cal-grid { grid-auto-rows: minmax(92px, auto); }
+  .mksa-cal-day  { min-height: 92px; }
+  .mksa-status-center { padding: 18px 6px 26px; }
+  .mksa-status-pill { font-size: 10px; padding: 3px 6px; }
+  .mksa-chip { font-size: 9.5px; padding: 2px 5px; }
+}
+
+@media (max-width: 480px){
+  .mksa-cal-grid { grid-auto-rows: minmax(82px, auto); }
+  .mksa-cal-day  { min-height: 82px; }
+  .mksa-status-center { padding: 16px 6px 24px; }
+  .mksa-status-pill { font-size: 9.5px; padding: 2px 6px; }
+  .mksa-chip { font-size: 9px; padding: 2px 4px; }
+}

@@ -1,0 +1,17 @@
+/* Import Cairo font */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap');
+
+/* Apply Cairo globally in Desk */
+body, 
+.form-control, 
+.frappe-control, 
+.awesomplete input, 
+.modal-title, 
+.navbar, 
+.page-title, 
+.form-header, 
+h1, h2, h3, h4, h5, h6, 
+label, 
+button {
+    font-family: 'Cairo', sans-serif !important;
+}

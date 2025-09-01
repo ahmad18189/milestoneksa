@@ -1,0 +1,35 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Purchase Order",
+  "enabled": 1,
+  "modified": "2025-08-04 14:27:50.016300",
+  "module": null,
+  "name": "po script",
+  "script": "frappe.ui.form.on('Purchase Order', {\n\trefresh(frm) {\n\t\tfrm.add_custom_button(\n        __('Populate From Items'),\n        function() {\n          if (!frm.doc.items || frm.doc.items.length === 0) {\n            frappe.msgprint(__('No items found to generate schedule.'));\n            return;\n          }\n          // Clear existing schedule rows\n          frm.clear_table('payment_schedule');\n\n          // Sequential monthly schedule based on posting date\n          let current = frm.doc.posting_date || frm.doc.transaction_date;\n          frm.doc.items.forEach(item => {\n            const row = frm.add_child('payment_schedule');\n            // Start date for this task\n            row.start_date = current;\n            // Calculate due_date one month after start_date\n            const nextDue = frappe.datetime.add_months(current, 1);\n            row.due_date = nextDue;\n            row.payment_amount = flt(item.qty) * flt(item.rate);\n            row.description = `${item.item_code} – ${item.description || item.item_name}`;\n            // Next task starts when this one ends\n            current = nextDue;\n          });\n\n          // Refresh table and notify\n          frm.refresh_field('payment_schedule');\n          frappe.msgprint(__('Payment Schedule populated sequentially from posting date.'));\n        }\n      );\n\t}\n})",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Employee",
+  "enabled": 1,
+  "modified": "2025-08-19 11:17:43.067990",
+  "module": null,
+  "name": "Employee Code",
+  "script": "frappe.ui.form.on('Employee', {\n\trefresh(frm) {\n\t\trecalc_residence_total(frm); // keep UI consistent on load\n\t},\n\n\t// Fired when a row is added to the child table\n\tcustom_residence_costs_add(frm) {\n\t\trecalc_residence_total(frm);\n\t}\n});\n\n// Trigger on edits inside the child table rows\nfrappe.ui.form.on('Residence Costs', {\n\tamount(frm, cdt, cdn) {\n\t\trecalc_residence_total(frm);\n\t},\n\ttransaction_date(frm, cdt, cdn) {\n\t\t// optional: only if you want any change to prompt recompute\n\t\trecalc_residence_total(frm);\n\t},\n\tresidence_costs(frm, cdt, cdn) {\n\t\t// optional: same note as above\n\t\trecalc_residence_total(frm);\n\t},\n\t// Fired when a row is removed from the child table\n\tcustom_residence_costs_remove(frm, cdt, cdn) {\n\t\trecalc_residence_total(frm);\n\t}\n});\n\nfunction recalc_residence_total(frm) {\n\tlet total = 0.0;\n\t(frm.doc.custom_residence_costs || []).forEach(r => {\n\t\ttotal += flt(r.amount || 0);\n\t});\n\tfrm.set_value('custom_total_cost', total);\n\tfrm.refresh_field('custom_total_cost');\n}\n\n// frappe.utils.flt helper for consistency with backend rounding\nfunction flt(val, precision) {\n\tconst p = (typeof precision === 'number') ? precision : 2;\n\tlet n = parseFloat(val);\n\tif (isNaN(n)) n = 0;\n\treturn parseFloat(n.toFixed(p));\n}\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Payroll Entry",
+  "enabled": 1,
+  "modified": "2025-08-26 14:23:25.542355",
+  "module": null,
+  "name": "payroll print",
+  "script": "frappe.ui.form.on('Payroll Entry', {\n  refresh(frm) {\n    // Only show on Submitted (change to !== 0 if you also want Draft)\n    if (frm.doc.docstatus !== 1) return;\n\n    // --- Helper: POST to an endpoint and open in a new tab (with CSRF) ---\n    const open_post = (url, params = {}) => {\n      const form = document.createElement('form');\n      form.method = 'POST';\n      form.action = url;\n      form.target = '_blank';\n\n      // include CSRF token so Frappe accepts the POST\n      const fields = { csrf_token: frappe.csrf_token, ...params };\n      Object.entries(fields).forEach(([k, v]) => {\n        const input = document.createElement('input');\n        input.type = 'hidden';\n        input.name = k;\n        input.value = typeof v === 'string' ? v : JSON.stringify(v);\n        form.appendChild(input);\n      });\n\n      document.body.appendChild(form);\n      form.submit();\n      form.remove();\n    };\n\n    const group = __('Cairo PDF');\n\n    // Build employee list once\n    const employees = (frm.doc.employees || []).map(r => r.employee).filter(Boolean);\n\n    // A) Custom report PDF (your HTML/CSS via milestoneksa.api.pdf.download_salary_report_pdf)\n    frm.add_custom_button(__('Salary Register (Cairo PDF)'), () => {\n      const filters = {\n        company: frm.doc.company,\n        from_date: frm.doc.start_date || frm.doc.from_date,\n        to_date: frm.doc.end_date || frm.doc.to_date,\n        payroll_frequency: frm.doc.payroll_frequency,\n        payroll_entry: frm.doc.name,\n        employee_list: employees, // server will post-filter rows if needed\n      };\n\n      open_post('/api/method/milestoneksa.api.pdf.download_salary_report_pdf', {\n        report_name: 'Salary Register', // change if you want another report\n        filters: JSON.stringify(filters),\n      });\n    }, group);\n\n    // B) Merge all Salary Slips for this Payroll Entry using your Cairo print format\n    frm.add_custom_button(__('All Salary Slips (Cairo Print)'), () => {\n      open_post('/api/method/frappe.utils.print_format.download_multi_pdf', {\n        doctype: 'Salary Slip',\n        filters: JSON.stringify([['payroll_entry', '=', frm.doc.name]]),\n        print_format: 'Salary Slip - Cairo',\n        no_letterhead: 0,\n        orientation: 'Portrait',\n      });\n    }, group);\n  },\n});\n",
+  "view": "Form"
+ }
+]

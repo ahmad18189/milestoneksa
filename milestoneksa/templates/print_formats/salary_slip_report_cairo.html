@@ -1,0 +1,99 @@
+{% set rtl = (frappe.local.lang or '').startswith('ar') %}
+{% if letter_head %}{{ letter_head }}{% endif %}
+<!doctype html>
+<html lang="{{ frappe.local.lang or 'en' }}">
+<head>
+<meta charset="utf-8">
+<title>{{ _(report_name) }}</title>
+
+<!-- Google font (simple). Prefer self-host below for wkhtmltopdf reliability. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap" rel="stylesheet">
+
+<!-- Self-hosted font (recommended). Put Cairo[wght].woff2 in assets and uncomment:
+<style>
+@font-face{
+  font-family:'Cairo';
+  src:url('/assets/milestoneksa/fonts/Cairo[wght].woff2') format('woff2');
+  font-weight:200 1000;
+  font-style:normal;
+  font-display:swap;
+}
+</style>
+-->
+
+<style>
+  html, body, * { font-family:'Cairo', sans-serif !important; }
+  body { font-size:12.5px; color:#111; {% if rtl %} direction: rtl; {% endif %} }
+  h1,h2,h3,h4,h5 { margin:0 0 6px 0; }
+  .container { margin-top:8px; }
+  .header { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; }
+  .meta { font-size:11.5px; color:#475569; }
+  .table { width:100%; border-collapse: collapse; margin-top:10px; }
+  .table th { text-align:{{ 'right' if rtl else 'left' }}; background:#f8fafc; }
+  .table th, .table td { border:1px solid #e5e7eb; padding:6px 8px; vertical-align:top; }
+  .badge { display:inline-block; padding:2px 8px; border:1px solid #e5e7eb; border-radius:999px; font-size:11px; }
+  .tright { text-align: {{ 'left' if rtl else 'right' }}; }
+  .note { font-size:11px; color:#64748b; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div>
+      <h2>{{ _(report_name) }}</h2>
+      <div class="meta">
+        {{ _("Generated on") }}:
+        {{ frappe.utils.format_datetime(frappe.utils.now_datetime()) }}
+      </div>
+    </div>
+    {% if filters %}
+      <div class="meta">
+        <b>{{ _("Filters") }}:</b>
+        {% for k, v in filters.items() if v %}
+          <span class="badge">{{ _(k) }}: {{ v }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        {% for col in columns %}
+          {% set label = (col.label if col.label is defined else col.get('label')) %}
+          <th>{{ _(label or col.fieldname or col.get('fieldname') or '') }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {# use default_currency provided by Python; if absent fallback to filter #}
+      {% set _currency = default_currency or filters.get('currency') %}
+      {% for row in rows %}
+        <tr>
+          {% for col in columns %}
+            {% set key = (col.fieldname if col.fieldname is defined else col.get('fieldname') or col.get('label')) %}
+            {% set ftype = (col.fieldtype if col.fieldtype is defined else col.get('fieldtype')) %}
+            {% set opts = (col.options if col.options is defined else col.get('options')) %}
+            <td class="{{ 'tright' if ftype in ['Currency','Int','Float','Percent'] or opts=='Currency' else '' }}">
+              {% if ftype == 'Currency' or opts == 'Currency' %}
+                {{ frappe.utils.fmt_money(row.get(key), currency=_currency) }}
+              {% else %}
+                {{ row.get(key) }}
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not rows %}
+    <div class="note">{{ _("No data for the selected filters.") }}</div>
+  {% endif %}
+
+</div>
+</body>
+</html>

@@ -12,7 +12,7 @@ doc_events = {
     }
 }
 doctype_js = {
-	"Employee": ["public/js/employee_assets.js","public/js/employee_salary_ui.js"]
+	"Employee": ["public/js/employee_assets.js","public/js/employee_salary_ui.js","public/js/employee_custody_ui.js"]
 }
 fixtures = [
     {"doctype": "Custom Field"},

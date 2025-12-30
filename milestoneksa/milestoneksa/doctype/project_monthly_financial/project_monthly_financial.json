@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "creation": "2025-12-06 14:22:09.867437",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "month",
+  "year",
+  "reported_by",
+  "report_date",
+  "budgeted_amount",
+  "actual_spent",
+  "variance",
+  "variance_percentage",
+  "remarks",
+  "attachment"
+ ],
+ "fields": [
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Month",
+   "options": "January\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "reqd": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "report_date",
+   "fieldtype": "Date",
+   "label": "Report Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "budgeted_amount",
+   "fieldtype": "Currency",
+   "label": "Budgeted Amount (SAR)"
+  },
+  {
+   "fieldname": "actual_spent",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Actual Spent (SAR)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "variance",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Variance (SAR)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "variance_percentage",
+   "fieldtype": "Percent",
+   "label": "Variance (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Text Editor",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Financial Report"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-06 14:22:09.867437",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Project Monthly Financial",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

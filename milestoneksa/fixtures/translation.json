@@ -245,5 +245,44 @@
   "name": "jlogkm9ctn",
   "source_text": "Amount",
   "translated_text": "المبلغ"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2025-09-17 08:38:57.273527",
+  "name": "lej3ejo56f",
+  "source_text": "National ID Number",
+  "translated_text": "رقم الهوية الوطنية"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2025-09-17 08:35:39.468828",
+  "name": "lli33id8b5",
+  "source_text": "ID Date Of Issue",
+  "translated_text": "تاريخ اصدار الهوية الوطنية"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2025-09-17 08:36:03.167613",
+  "name": "lsvedj7v68",
+  "source_text": "ID Date Of Expiration",
+  "translated_text": "تاريخ انتهاء الهوية الوطنية"
  }
 ]

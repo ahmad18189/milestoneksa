@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "creation": "2025-12-06 14:22:09.375750",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "contractor",
+  "contractor_name",
+  "offer_date",
+  "total_amount",
+  "validity_date",
+  "duration_days",
+  "payment_terms",
+  "warranty_period",
+  "status",
+  "attachment",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "contractor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Contractor",
+   "options": "Supplier",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "contractor.supplier_name",
+   "fieldname": "contractor_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contractor Name",
+   "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "offer_date",
+   "fieldtype": "Date",
+   "label": "Offer Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Amount (SAR)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "validity_date",
+   "fieldtype": "Date",
+   "label": "Validity Date"
+  },
+  {
+   "fieldname": "duration_days",
+   "fieldtype": "Int",
+   "label": "Duration (Days)"
+  },
+  {
+   "fieldname": "payment_terms",
+   "fieldtype": "Small Text",
+   "label": "Payment Terms"
+  },
+  {
+   "fieldname": "warranty_period",
+   "fieldtype": "Int",
+   "label": "Warranty Period (Months)"
+  },
+  {
+   "default": "Received",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Received\nUnder Review\nAccepted\nRejected"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Offer Document"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-06 14:22:09.375750",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Project Contractor Offer",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

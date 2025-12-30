@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:employee",
+ "autoname": "PR-.######",
  "creation": "2025-06-25 12:16:00.324338",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -18,6 +18,7 @@
   "attachment",
   "amount",
   "project",
+  "priority",
   "section_break_bkfz",
   "final_remarks"
  ],
@@ -28,8 +29,7 @@
    "in_list_view": 1,
    "label": "Employee",
    "options": "Employee",
-   "reqd": 1,
-   "unique": 1
+   "reqd": 1
   },
   {
    "fetch_from": "employee.employee_name",
@@ -63,8 +63,7 @@
    "fieldname": "attachment",
    "fieldtype": "Attach",
    "in_list_view": 1,
-   "label": "Attachment",
-   "reqd": 1
+   "label": "Attachment"
   },
   {
    "fieldname": "amount",
@@ -106,15 +105,22 @@
    "fieldtype": "Link",
    "label": "Project",
    "options": "Project"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "Normal\nHigh\nUrgent\nInformative"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-20 18:48:23.285369",
- "modified_by": "Administrator",
+ "modified": "2025-12-22 14:53:36.953800",
+ "modified_by": "m.alnasser@milestoneksa.com",
  "module": "Milestoneksa",
  "name": "Payment Approval Request",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {

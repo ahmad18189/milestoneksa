@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "creation": "2025-12-17 14:51:41.266289",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "floor_name",
+  "area_sqm",
+  "include_in_total",
+  "percentage",
+  "number_of_units",
+  "usage_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "floor_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Floor/Level Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "area_sqm",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Area (m\u00b2)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "include_in_total",
+   "fieldtype": "Check",
+   "default": 1,
+   "in_list_view": 1,
+   "label": "Include in Total"
+  },
+  {
+   "fieldname": "percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Percentage (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "number_of_units",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Number of Units"
+  },
+  {
+   "fieldname": "usage_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Usage Type",
+   "options": "Commercial\nStorage\nServices\nResidential\nAdministrative\nMixed\nOther"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-17 16:39:45.544772",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Project Building Area Component",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

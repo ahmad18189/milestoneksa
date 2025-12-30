@@ -1,0 +1,943 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-12-06 14:22:24.369556",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tab_proposal",
+  "section_basic_info",
+  "project_name",
+  "project_code",
+  "project_type",
+  "column_break_1",
+  "proposal_date",
+  "location",
+  "property_location",
+  "section_proposer",
+  "employee",
+  "employee_name",
+  "department",
+  "column_break_2",
+  "investment_type",
+  "expected_value",
+  "section_description",
+  "project_description",
+  "supporting_documents",
+  "section_approvals",
+  "deputy_ceo_approval",
+  "deputy_ceo_approver",
+  "deputy_ceo_approval_date",
+  "column_break_3",
+  "ceo_approval",
+  "ceo_approver",
+  "ceo_approval_date",
+  "tab_evaluation",
+  "section_evaluation",
+  "evaluation_reports",
+  "section_eval_summary",
+  "projects_mgmt_feasible",
+  "financial_mgmt_feasible",
+  "column_break_4",
+  "initial_estimated_cost",
+  "initial_estimated_duration",
+  "tab_feasibility",
+  "section_boq",
+  "boq_template",
+  "feasibility_items",
+  "total_boq_amount",
+  "section_layout",
+  "layout_description",
+  "layout_attachment",
+  "section_financial",
+  "estimated_total_cost",
+  "estimated_roi",
+  "break_even_point",
+  "column_break_5",
+  "cash_flow_year_1",
+  "cash_flow_year_2",
+  "cash_flow_year_3",
+  "financial_analysis_attachment",
+  "tab_execution",
+  "section_technical",
+  "technical_requirements",
+  "section_licenses",
+  "licenses",
+  "section_contractors",
+  "contractor_offers",
+  "selected_contractor",
+  "contract_amount",
+  "section_tracking",
+  "start_date",
+  "expected_completion_date",
+  "actual_completion_date",
+  "column_break_6",
+  "progress_percentage",
+  "weekly_reports",
+  "monthly_financial_reports",
+  "tab_handover",
+  "section_handover",
+  "handover_date",
+  "handed_over_to",
+  "column_break_7",
+  "handover_status",
+  "handover_items",
+  "handover_remarks",
+  "tab_dashboard",
+  "section_dashboard",
+  "dashboard_html",
+  "section_status",
+  "workflow_state",
+  "status",
+  "section_team",
+  "team_template",
+  "team_members",
+  "naming_series",
+  "amended_from",
+  "tab_building_info",
+  "section_basic_building",
+  "total_land_area",
+  "number_of_floors",
+  "column_break_building_1",
+  "building_type",
+  "building_height",
+  "building_dimensions",
+  "section_areas",
+  "building_areas",
+  "total_building_area",
+  "column_break_areas",
+  "total_units",
+  "section_spaces",
+  "building_spaces",
+  "total_spaces_count",
+  "section_technical_details",
+  "number_of_bathrooms",
+  "number_of_stairs",
+  "structural_details",
+  "column_break_technical",
+  "electrical_requirements",
+  "plumbing_requirements",
+  "hvac_requirements",
+  "other_technical_details",
+  "section_images",
+  "floor_plan_image",
+  "cross_section_image",
+  "elevation_image",
+  "column_break_images_1",
+  "site_plan_image",
+  "other_drawings",
+  "images_description",
+  "floor_plan_image_display",
+  "cross_section_image_display",
+  "elevation_image_display",
+  "site_plan_image_display"
+ ],
+ "fields": [
+  {
+   "fieldname": "tab_proposal",
+   "fieldtype": "Tab Break",
+   "label": "Proposal"
+  },
+  {
+   "fieldname": "section_basic_info",
+   "fieldtype": "Section Break",
+   "label": "Basic Information"
+  },
+  {
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Project Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "project_code",
+   "fieldtype": "Data",
+   "label": "Project Code",
+   "unique": 1
+  },
+  {
+   "fieldname": "project_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Project Type",
+   "options": "Real Estate\nConstruction\nOperational",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "proposal_date",
+   "fieldtype": "Date",
+   "label": "Proposal Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Small Text",
+   "label": "Location/Address",
+   "reqd": 1
+  },
+  {
+   "fieldname": "property_location",
+   "fieldtype": "Small Text",
+   "label": "Property Location (if applicable)"
+  },
+  {
+   "fieldname": "section_proposer",
+   "fieldtype": "Section Break",
+   "label": "Proposer Information"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee (Proposer)",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "investment_type",
+   "fieldtype": "Small Text",
+   "label": "Type of Investment"
+  },
+  {
+   "fieldname": "expected_value",
+   "fieldtype": "Small Text",
+   "label": "Expected Value/Feasibility"
+  },
+  {
+   "fieldname": "section_description",
+   "fieldtype": "Section Break",
+   "label": "Project Description"
+  },
+  {
+   "fieldname": "project_description",
+   "fieldtype": "Text Editor",
+   "label": "Project Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supporting_documents",
+   "fieldtype": "Table",
+   "label": "Supporting Documents",
+   "options": "Project Attachment"
+  },
+  {
+   "fieldname": "section_approvals",
+   "fieldtype": "Section Break",
+   "label": "Initial Approvals"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "deputy_ceo_approval",
+   "fieldtype": "Select",
+   "label": "Deputy CEO Initial Approval",
+   "options": "Pending\nApproved\nRejected",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deputy_ceo_approver",
+   "fieldtype": "Link",
+   "label": "Deputy CEO",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deputy_ceo_approval_date",
+   "fieldtype": "Date",
+   "label": "Deputy CEO Approval Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "ceo_approval",
+   "fieldtype": "Select",
+   "label": "CEO Final Approval",
+   "options": "Pending\nApproved\nRejected",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ceo_approver",
+   "fieldtype": "Link",
+   "label": "CEO",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ceo_approval_date",
+   "fieldtype": "Date",
+   "label": "CEO Approval Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_evaluation",
+   "fieldtype": "Tab Break",
+   "label": "Evaluation"
+  },
+  {
+   "fieldname": "section_evaluation",
+   "fieldtype": "Section Break",
+   "label": "Initial Evaluation"
+  },
+  {
+   "fieldname": "evaluation_reports",
+   "fieldtype": "Table",
+   "label": "Evaluation Reports",
+   "options": "Project Evaluation Report"
+  },
+  {
+   "fieldname": "section_eval_summary",
+   "fieldtype": "Section Break",
+   "label": "Evaluation Summary"
+  },
+  {
+   "default": "0",
+   "fieldname": "projects_mgmt_feasible",
+   "fieldtype": "Check",
+   "label": "Projects Management: Feasible",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "financial_mgmt_feasible",
+   "fieldtype": "Check",
+   "label": "Financial Management: Feasible",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "initial_estimated_cost",
+   "fieldtype": "Currency",
+   "label": "Initial Estimated Cost (SAR)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "initial_estimated_duration",
+   "fieldtype": "Int",
+   "label": "Initial Estimated Duration (Days)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_feasibility",
+   "fieldtype": "Tab Break",
+   "label": "Feasibility Study"
+  },
+  {
+   "fieldname": "section_boq",
+   "fieldtype": "Section Break",
+   "label": "Bill of Quantities (BOQ)"
+  },
+  {
+   "fieldname": "boq_template",
+   "fieldtype": "Link",
+   "label": "BOQ Template",
+   "options": "BOQ Template"
+  },
+  {
+   "fieldname": "feasibility_items",
+   "fieldtype": "Table",
+   "label": "Feasibility Items",
+   "options": "Project Feasibility Item"
+  },
+  {
+   "fieldname": "total_boq_amount",
+   "fieldtype": "Currency",
+   "label": "Total BOQ Amount (SAR)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_layout",
+   "fieldtype": "Section Break",
+   "label": "Layout / Concept"
+  },
+  {
+   "fieldname": "layout_description",
+   "fieldtype": "Text Editor",
+   "label": "Layout Description"
+  },
+  {
+   "fieldname": "layout_attachment",
+   "fieldtype": "Attach",
+   "label": "Layout/Concept Document"
+  },
+  {
+   "fieldname": "section_financial",
+   "fieldtype": "Section Break",
+   "label": "Financial Analysis"
+  },
+  {
+   "fieldname": "estimated_total_cost",
+   "fieldtype": "Currency",
+   "label": "Estimated Total Cost (SAR)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "estimated_roi",
+   "fieldtype": "Percent",
+   "label": "Estimated ROI (%)"
+  },
+  {
+   "fieldname": "break_even_point",
+   "fieldtype": "Data",
+   "label": "Break Even Point"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cash_flow_year_1",
+   "fieldtype": "Currency",
+   "label": "Cash Flow Year 1 (SAR)"
+  },
+  {
+   "fieldname": "cash_flow_year_2",
+   "fieldtype": "Currency",
+   "label": "Cash Flow Year 2 (SAR)"
+  },
+  {
+   "fieldname": "cash_flow_year_3",
+   "fieldtype": "Currency",
+   "label": "Cash Flow Year 3 (SAR)"
+  },
+  {
+   "fieldname": "financial_analysis_attachment",
+   "fieldtype": "Attach",
+   "label": "Financial Analysis Document"
+  },
+  {
+   "fieldname": "tab_execution",
+   "fieldtype": "Tab Break",
+   "label": "Execution"
+  },
+  {
+   "fieldname": "section_technical",
+   "fieldtype": "Section Break",
+   "label": "Technical Requirements"
+  },
+  {
+   "fieldname": "technical_requirements",
+   "fieldtype": "Text Editor",
+   "label": "Technical Requirements"
+  },
+  {
+   "fieldname": "section_licenses",
+   "fieldtype": "Section Break",
+   "label": "Licenses & Permits"
+  },
+  {
+   "fieldname": "licenses",
+   "fieldtype": "Table",
+   "label": "Licenses",
+   "options": "Project License"
+  },
+  {
+   "fieldname": "section_contractors",
+   "fieldtype": "Section Break",
+   "label": "Contractor Offers"
+  },
+  {
+   "fieldname": "contractor_offers",
+   "fieldtype": "Table",
+   "label": "Contractor Offers",
+   "options": "Project Contractor Offer"
+  },
+  {
+   "fieldname": "selected_contractor",
+   "fieldtype": "Link",
+   "label": "Selected Contractor",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "contract_amount",
+   "fieldtype": "Currency",
+   "label": "Contract Amount (SAR)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_tracking",
+   "fieldtype": "Section Break",
+   "label": "Execution Tracking"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "expected_completion_date",
+   "fieldtype": "Date",
+   "label": "Expected Completion Date"
+  },
+  {
+   "fieldname": "actual_completion_date",
+   "fieldtype": "Date",
+   "label": "Actual Completion Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "progress_percentage",
+   "fieldtype": "Percent",
+   "label": "Progress (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "weekly_reports",
+   "fieldtype": "Table",
+   "label": "Weekly Reports",
+   "options": "Project Weekly Report"
+  },
+  {
+   "fieldname": "monthly_financial_reports",
+   "fieldtype": "Table",
+   "label": "Monthly Financial Reports",
+   "options": "Project Monthly Financial"
+  },
+  {
+   "fieldname": "tab_handover",
+   "fieldtype": "Tab Break",
+   "label": "Handover"
+  },
+  {
+   "fieldname": "section_handover",
+   "fieldtype": "Section Break",
+   "label": "Final Handover"
+  },
+  {
+   "fieldname": "handover_date",
+   "fieldtype": "Date",
+   "label": "Handover Date"
+  },
+  {
+   "description": "Marketing & Sales Department",
+   "fieldname": "handed_over_to",
+   "fieldtype": "Link",
+   "label": "Handed Over To",
+   "options": "Department"
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "handover_status",
+   "fieldtype": "Select",
+   "label": "Handover Status",
+   "options": "Pending\nIn Progress\nCompleted"
+  },
+  {
+   "fieldname": "handover_items",
+   "fieldtype": "Table",
+   "label": "Handover Checklist",
+   "options": "Project Handover Item"
+  },
+  {
+   "fieldname": "handover_remarks",
+   "fieldtype": "Text Editor",
+   "label": "Handover Remarks"
+  },
+  {
+   "fieldname": "tab_dashboard",
+   "fieldtype": "Tab Break",
+   "label": "Management Dashboard"
+  },
+  {
+   "fieldname": "section_dashboard",
+   "fieldtype": "Section Break",
+   "label": "Project Dashboard"
+  },
+  {
+   "fieldname": "dashboard_html",
+   "fieldtype": "HTML",
+   "label": "Dashboard",
+   "options": "HTML"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Workflow State",
+   "options": "Workflow State"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nPending Deputy CEO Approval\nPending CEO Approval\nUnder Initial Evaluation\nFeasibility Study Phase\nApproved\nIn Execution\nCompleted\nRejected",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_team",
+   "fieldtype": "Section Break",
+   "label": "Project Team"
+  },
+  {
+   "fieldname": "team_template",
+   "fieldtype": "Link",
+   "label": "Team Template",
+   "options": "Project Team Member Template"
+  },
+  {
+   "fieldname": "team_members",
+   "fieldtype": "Table",
+   "label": "Team Members",
+   "options": "Project Team Member"
+  },
+  {
+   "default": "PROJ-.YYYY.-.####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "PROJ-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Project Proposal",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tab_building_info",
+   "fieldtype": "Tab Break",
+   "label": "Building Information"
+  },
+  {
+   "fieldname": "section_basic_building",
+   "fieldtype": "Section Break",
+   "label": "Basic Building Information"
+  },
+  {
+   "fieldname": "total_land_area",
+   "fieldtype": "Float",
+   "label": "Total Land Area (m\u00b2)"
+  },
+  {
+   "fieldname": "number_of_floors",
+   "fieldtype": "Int",
+   "label": "Number of Floors/Levels"
+  },
+  {
+   "fieldname": "column_break_building_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "building_type",
+   "fieldtype": "Select",
+   "label": "Building Type",
+   "options": "Commercial\nResidential\nAdministrative\nMixed\nOther"
+  },
+  {
+   "fieldname": "building_height",
+   "fieldtype": "Float",
+   "label": "Building Height (m)"
+  },
+  {
+   "description": "Length x Width x Height",
+   "fieldname": "building_dimensions",
+   "fieldtype": "Small Text",
+   "label": "Building Dimensions"
+  },
+  {
+   "fieldname": "section_areas",
+   "fieldtype": "Section Break",
+   "label": "Areas and Building Components"
+  },
+  {
+   "fieldname": "building_areas",
+   "fieldtype": "Table",
+   "label": "Areas Table",
+   "options": "Project Building Area Component"
+  },
+  {
+   "fieldname": "total_building_area",
+   "fieldtype": "Float",
+   "label": "Total Building Area (m\u00b2)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_areas",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_units",
+   "fieldtype": "Int",
+   "label": "Total Number of Units",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_spaces",
+   "fieldtype": "Section Break",
+   "label": "Spaces and Units"
+  },
+  {
+   "fieldname": "building_spaces",
+   "fieldtype": "Table",
+   "label": "Spaces Table",
+   "options": "Project Building Space"
+  },
+  {
+   "fieldname": "total_spaces_count",
+   "fieldtype": "Int",
+   "label": "Total Spaces Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_technical_details",
+   "fieldtype": "Section Break",
+   "label": "Technical Details"
+  },
+  {
+   "fieldname": "number_of_bathrooms",
+   "fieldtype": "Int",
+   "label": "Number of Bathrooms"
+  },
+  {
+   "fieldname": "number_of_stairs",
+   "fieldtype": "Int",
+   "label": "Number of Stairs/Staircases"
+  },
+  {
+   "fieldname": "structural_details",
+   "fieldtype": "Text Editor",
+   "label": "Structural Details"
+  },
+  {
+   "fieldname": "column_break_technical",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "electrical_requirements",
+   "fieldtype": "Small Text",
+   "label": "Electrical Requirements"
+  },
+  {
+   "fieldname": "plumbing_requirements",
+   "fieldtype": "Small Text",
+   "label": "Plumbing Requirements"
+  },
+  {
+   "fieldname": "hvac_requirements",
+   "fieldtype": "Small Text",
+   "label": "HVAC Requirements"
+  },
+  {
+   "fieldname": "other_technical_details",
+   "fieldtype": "Text Editor",
+   "label": "Other Technical Details"
+  },
+  {
+   "fieldname": "section_images",
+   "fieldtype": "Section Break",
+   "label": "Images and Drawings"
+  },
+  {
+   "fieldname": "floor_plan_image",
+   "fieldtype": "Attach Image",
+   "label": "Floor Plan Image"
+  },
+  {
+   "fieldname": "cross_section_image",
+   "fieldtype": "Attach Image",
+   "label": "Cross Section Image"
+  },
+  {
+   "fieldname": "elevation_image",
+   "fieldtype": "Attach Image",
+   "label": "Elevation Image"
+  },
+  {
+   "fieldname": "column_break_images_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_plan_image",
+   "fieldtype": "Attach Image",
+   "label": "Site Plan Image"
+  },
+  {
+   "fieldname": "other_drawings",
+   "fieldtype": "Attach",
+   "label": "Other Drawings/Documents"
+  },
+  {
+   "fieldname": "images_description",
+   "fieldtype": "Small Text",
+   "label": "Images Description/Notes"
+  },
+  {
+   "fieldname": "floor_plan_image_display",
+   "fieldtype": "Image",
+   "label": "Floor Plan Preview",
+   "options": "floor_plan_image",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cross_section_image_display",
+   "fieldtype": "Image",
+   "label": "Cross Section Preview",
+   "options": "cross_section_image",
+   "read_only": 1
+  },
+  {
+   "fieldname": "elevation_image_display",
+   "fieldtype": "Image",
+   "label": "Elevation Preview",
+   "options": "elevation_image",
+   "read_only": 1
+  },
+  {
+   "fieldname": "site_plan_image_display",
+   "fieldtype": "Image",
+   "label": "Site Plan Preview",
+   "options": "site_plan_image",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-12-17 15:31:44.209749",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Project Proposal",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Employee",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Deputy CEO",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "CEO",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Projects Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Financial Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "subject_field": "project_name",
+ "title_field": "project_name",
+ "track_changes": 1,
+ "track_seen": 1
+}

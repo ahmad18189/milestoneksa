@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "creation": "2025-12-06 14:22:08.760693",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_type",
+  "item_code",
+  "item_name",
+  "description",
+  "quantity",
+  "uom",
+  "unit_rate",
+  "amount",
+  "year",
+  "cash_flow"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Item Type",
+   "options": "BOQ Item\nLayout Item\nFinancial Projection",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Code"
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "unit_rate",
+   "fieldtype": "Currency",
+   "label": "Unit Rate (SAR)"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount (SAR)",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.item_type=='Financial Projection'",
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "label": "Year"
+  },
+  {
+   "depends_on": "eval:doc.item_type=='Financial Projection'",
+   "fieldname": "cash_flow",
+   "fieldtype": "Currency",
+   "label": "Cash Flow (SAR)"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-06 14:22:08.760693",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Project Feasibility Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

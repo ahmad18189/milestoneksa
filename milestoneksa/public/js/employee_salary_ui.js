@@ -262,13 +262,12 @@ const MKSA = {
 
 
 };
-
 // ---------------- Form bindings ----------------
 frappe.ui.form.on("Employee", {
-  // Fetch button click
+  // Fetch button click (HR Manager/User only)
   async mksa_fetch_salary(frm) {
-    const canFetch = frappe.user.has_role("HR Manager") || frappe.user.has_role("HR User");
-    if (!canFetch) {
+    const canHR = frappe.user.has_role("HR Manager") || frappe.user.has_role("HR User");
+    if (!canHR) {
       frappe.msgprint(__("Not permitted"));
       return;
     }
@@ -281,9 +280,7 @@ frappe.ui.form.on("Employee", {
         freeze: true,
         freeze_message: __("Loading…"),
       });
-      const snap = r.message || {};
-      // your existing renderer:
-      MKSA.renderStructureHTML(frm, snap);
+      MKSA.renderStructureHTML(frm, r.message || {});
     } catch (e) {
       frm.get_field("mksa_salary_html").$wrapper.html(
         '<div class="text-danger">' + __("Failed to load salary snapshot.") + "</div>"
@@ -291,14 +288,44 @@ frappe.ui.form.on("Employee", {
     }
   },
 
-  // On form refresh: just control button visibility & clear HTML. Do NOT auto-fetch.
-  refresh(frm) {
-    const canFetch = frappe.user.has_role("HR Manager") || frappe.user.has_role("HR User");
-    // Hide/Show the custom Button field
-    if (frm.fields_dict.mksa_fetch_salary) {
-      frm.toggle_display("mksa_fetch_salary", canFetch);
+  // 🔧 Alter Salary (HR Manager/User only)
+  mksa_alter_salary(frm) {
+    const canHR = frappe.user.has_role("HR Manager") || frappe.user.has_role("HR User");
+    if (!canHR) {
+      frappe.msgprint(__("Not permitted"));
+      return;
     }
-    // Optionally blank the HTML until user clicks
+    if (!frm.doc.name) return;
+    MKSA.openAlterDialog(frm);
+  },
+
+  // ➕ New Additional Salary (HR Manager/User only)
+  mksa_new_additional_salary(frm) {
+    const canHR = frappe.user.has_role("HR Manager") || frappe.user.has_role("HR User");
+    if (!canHR) {
+      frappe.msgprint(__("Not permitted"));
+      return;
+    }
+    if (!frm.doc.name) return;
+    MKSA.routeToAdditionalSalary(frm);
+  },
+
+  // Do NOT auto-fetch; just manage visibility + placeholder
+  refresh(frm) {
+    const canHR = frappe.user.has_role("HR Manager") || frappe.user.has_role("HR User");
+
+    // Show/hide your custom Button fields by role
+    if (frm.fields_dict.mksa_fetch_salary) {
+      frm.toggle_display("mksa_fetch_salary", canHR);
+    }
+    if (frm.fields_dict.mksa_alter_salary) {
+      frm.toggle_display("mksa_alter_salary", canHR);
+    }
+    if (frm.fields_dict.mksa_new_additional_salary) {
+      frm.toggle_display("mksa_new_additional_salary", canHR);
+    }
+
+    // Optional: placeholder until user clicks Fetch
     if (frm.fields_dict.mksa_salary_html) {
       frm.get_field("mksa_salary_html").$wrapper.html(
         '<div class="text-muted">' + __("Click “Fetch Salary” to load the current structure.") + "</div>"

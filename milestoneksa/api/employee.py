@@ -14,8 +14,8 @@ def validate_employee(doc, method=None):
 	- Validate Sponsorship Transfer rows (required fields, order, overlap).
 	"""
 	compute_residence_total(doc)
-	validate_residence_dates(doc)
-	validate_sponsorship_dates(doc)
+	#validate_residence_dates(doc)
+	#validate_sponsorship_dates(doc)
 
 
 def compute_residence_total(doc):
@@ -59,7 +59,8 @@ def validate_sponsorship_dates(doc):
 	# Per-row required & range checks
 	for r in rows:
 		if not r.sponsorship_start_date or not r.sponsorship_end_date:
-			frappe.throw(_("Row #{0}: Sponsorship Start and End dates are required.").format(r.idx))
+			pass
+			#frappe.throw(_("Row #{0}: Sponsorship Start and End dates are required.").format(r.idx))
 
 		s = getdate(r.sponsorship_start_date)
 		e = getdate(r.sponsorship_end_date)

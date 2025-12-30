@@ -6,14 +6,6 @@ app_email = "ahmed@milestoneksa.com"
 app_license = "mit"
 website_include_css = "/assets/milestoneksa/css/login.css"
 
-doc_events = {
-    "Purchase Order": {
-        "on_submit": "milestoneksa.milestoneksa.purchase_order.create_payment_tasks"
-    }
-}
-doctype_js = {
-	"Employee": ["public/js/employee_assets.js","public/js/employee_salary_ui.js","public/js/employee_custody_ui.js"]
-}
 fixtures = [
     {"doctype": "Custom Field"},
     {"doctype": "Client Script"},
@@ -21,26 +13,39 @@ fixtures = [
     # Warning: Translation without filters can be VERY large.
     {"doctype": "Translation"},
 ]
+
 app_include_css = [
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.css",
     "/assets/milestoneksa/css/quick_checkin.css",
     "/assets/milestoneksa/css/font.css"
 ]
+
 app_include_js = [
     "/assets/milestoneksa/js/purchase_order.js",
-    "assets/milestoneksa/js/report_pdf_button.js",
+    #"assets/milestoneksa/js/report_pdf_button.js",
     "assets/milestoneksa/js/setup_quick_checkin.js",
     "assets/milestoneksa/js/test_time_dialog.js",
     "assets/milestoneksa/js/test_fields_dialog.js",
+    "assets/milestoneksa/js/announcement_popup.js",
     #"/assets/milestoneksa/js/fix_task_gantt_scroll.js",
     #"/assets/milestoneksa/js/task_gantt_config.js",
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.umd.min.js",
 ]
+
 page_css = {
     "project_dashboard": "milestoneksa/css/project_dashboard.css"
 }
 
+doctype_js = {
+	"Employee": ["public/js/employee_assets.js","public/js/employee_salary_ui.js","public/js/employee_custody_ui.js"],
+	"Project": ["public/js/project_task_tab.js", "public/js/project_dashboard_tab.js", "public/js/project_building_info.js"],
+	"Project Proposal": ["public/js/project_proposal_dashboard.js", "public/js/project_building_info.js"]
+}
+
 doc_events = {
+	"Purchase Order": {
+		"on_submit": "milestoneksa.milestoneksa.purchase_order.create_payment_tasks"
+	},
 	"Employee": {
 		"validate": "milestoneksa.api.employee.validate_employee",
 	},
@@ -48,6 +53,13 @@ doc_events = {
 		"on_submit": "milestoneksa.events.payroll.payroll.create_ssa_on_submit",
 	}
 }
+boot_session = "milestoneksa.boot.boot_session"
+
+# Email
+# ------------------
+# Override email sending to use API instead of SMTP (bypasses DigitalOcean SMTP port blocking)
+override_email_send = "milestoneksa.email_api.send_email_via_api"
+
 # Apps
 # ------------------
 

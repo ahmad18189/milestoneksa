@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "autoname": "ANN-.#####",
+ "creation": "2025-09-08 12:39:43.423789",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "message",
+  "link_url",
+  "show_policy",
+  "section_audience",
+  "audience",
+  "roles",
+  "users",
+  "section_publish",
+  "is_published",
+  "publish_from",
+  "publish_upto",
+  "section_receipts",
+  "receipts"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Text Editor",
+   "in_list_view": 1,
+   "label": "Message (Rich Text)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "link_url",
+   "fieldtype": "Data",
+   "label": "Link (optional)",
+   "options": "URL"
+  },
+  {
+   "default": "Until Dismissed",
+   "fieldname": "show_policy",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Show Policy",
+   "options": "Until Dismissed\nOnce",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_audience",
+   "fieldtype": "Section Break",
+   "label": "Audience"
+  },
+  {
+   "default": "All",
+   "fieldname": "audience",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Audience Type",
+   "options": "All\nBy Role\nBy User\nRoles & Users",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:in_list(['By Role','Roles & Users'], doc.audience)",
+   "fieldname": "roles",
+   "fieldtype": "Table",
+   "label": "Target Roles",
+   "options": "Desk Announcement Role"
+  },
+  {
+   "depends_on": "eval:in_list(['By User','Roles & Users'], doc.audience)",
+   "fieldname": "users",
+   "fieldtype": "Table",
+   "label": "Target Users",
+   "options": "Desk Announcement User"
+  },
+  {
+   "fieldname": "section_publish",
+   "fieldtype": "Section Break",
+   "label": "Publishing"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_published",
+   "fieldtype": "Check",
+   "label": "Published"
+  },
+  {
+   "fieldname": "publish_from",
+   "fieldtype": "Datetime",
+   "label": "Publish From"
+  },
+  {
+   "fieldname": "publish_upto",
+   "fieldtype": "Datetime",
+   "label": "Publish Upto"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_receipts",
+   "fieldtype": "Section Break",
+   "label": "Receipts"
+  },
+  {
+   "fieldname": "receipts",
+   "fieldtype": "Table",
+   "label": "Receipts",
+   "options": "Desk Announcement Receipt"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-08 13:29:43.843603",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Desk Announcement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

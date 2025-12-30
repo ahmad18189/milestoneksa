@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "creation": "2025-12-06 14:22:09.613641",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "week_start_date",
+  "week_end_date",
+  "reported_by",
+  "report_date",
+  "progress_percentage",
+  "work_completed",
+  "work_planned",
+  "issues_challenges",
+  "photos"
+ ],
+ "fields": [
+  {
+   "fieldname": "week_start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Week Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "week_end_date",
+   "fieldtype": "Date",
+   "label": "Week End Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reported_by",
+   "fieldtype": "Link",
+   "label": "Reported By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "report_date",
+   "fieldtype": "Date",
+   "label": "Report Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "progress_percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Progress (%)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "work_completed",
+   "fieldtype": "Text Editor",
+   "label": "Work Completed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "work_planned",
+   "fieldtype": "Text Editor",
+   "label": "Work Planned for Next Week"
+  },
+  {
+   "fieldname": "issues_challenges",
+   "fieldtype": "Text Editor",
+   "label": "Issues/Challenges"
+  },
+  {
+   "fieldname": "photos",
+   "fieldtype": "Attach Image",
+   "label": "Progress Photos"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-06 14:22:09.613641",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Project Weekly Report",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

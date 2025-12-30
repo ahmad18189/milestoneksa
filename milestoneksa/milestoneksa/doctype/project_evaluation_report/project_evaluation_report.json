@@ -1,0 +1,106 @@
+{
+ "actions": [],
+ "creation": "2025-12-06 14:22:08.481163",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "evaluation_type",
+  "evaluated_by",
+  "evaluation_date",
+  "feasibility_status",
+  "estimated_cost",
+  "estimated_duration",
+  "regulatory_requirements",
+  "risks",
+  "recommendations",
+  "roi_estimate",
+  "financial_risks",
+  "attachment"
+ ],
+ "fields": [
+  {
+   "fieldname": "evaluation_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Evaluation Type",
+   "options": "Projects Management\nFinancial Management",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluated_by",
+   "fieldtype": "Link",
+   "label": "Evaluated By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "evaluation_date",
+   "fieldtype": "Date",
+   "label": "Evaluation Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "feasibility_status",
+   "fieldtype": "Select",
+   "label": "Feasibility Status",
+   "options": "Feasible\nNot Feasible\nConditional",
+   "reqd": 1
+  },
+  {
+   "fieldname": "estimated_cost",
+   "fieldtype": "Currency",
+   "label": "Estimated Cost (SAR)"
+  },
+  {
+   "fieldname": "estimated_duration",
+   "fieldtype": "Int",
+   "label": "Estimated Duration (Days)"
+  },
+  {
+   "fieldname": "regulatory_requirements",
+   "fieldtype": "Small Text",
+   "label": "Regulatory Requirements"
+  },
+  {
+   "fieldname": "risks",
+   "fieldtype": "Small Text",
+   "label": "Risks"
+  },
+  {
+   "fieldname": "recommendations",
+   "fieldtype": "Text Editor",
+   "label": "Recommendations"
+  },
+  {
+   "fieldname": "roi_estimate",
+   "fieldtype": "Percent",
+   "label": "ROI Estimate (%)"
+  },
+  {
+   "fieldname": "financial_risks",
+   "fieldtype": "Small Text",
+   "label": "Financial Risks"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Attachment"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-06 14:22:08.481163",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Project Evaluation Report",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

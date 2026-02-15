@@ -1,0 +1,41 @@
+{
+ "based_on": "completed_on",
+ "chart_name": "Monthly Completed Tasks",
+ "chart_type": "Count",
+ "color": "#10B759",
+ "creation": "2025-11-09 12:05:00.000000",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "document_type": "Task",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[[\"Task\",\"status\",\"=\",\"Completed\",false]]",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "modified": "2025-11-09 12:05:00.000000",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Monthly Completed Tasks",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "time_interval": "Monthly",
+ "timeseries": 1,
+ "timespan": "Last Year",
+ "type": "Line",
+ "use_report_chart": 0,
+ "y_axis": []
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

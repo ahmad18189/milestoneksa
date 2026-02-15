@@ -1,5 +1,25 @@
 frappe.ui.form.on("Project", {
+	// ==========================================================
+	// Project Task Tab Debug Marker
+	// ==========================================================
+	// If you do NOT see these logs in browser console, this file is NOT being executed
+	// (likely because a "Client Script" is overriding the behavior).
+	// ==========================================================
+	__mks_task_tab_version: "2026-01-18T00:00Z-task-tab-delete+select",
+
 	refresh(frm) {
+		try {
+			console.log(
+				"[MKS][TASK TAB] refresh",
+				{
+					project: frm?.doc?.name,
+					is_new: frm?.is_new?.(),
+					version: frm?.events?.__mks_task_tab_version,
+				}
+			);
+		} catch (e) {
+			// noop
+		}
 		// Add custom button in form toolbar
 		if (!frm.is_new()) {
 			frm.add_custom_button(__("Sync Tasks"), () => {
@@ -15,16 +35,29 @@ frappe.ui.form.on("Project", {
 	},
 
 	after_save(frm) {
+		try {
+			console.log(
+				"[MKS][TASK TAB] after_save",
+				{ project: frm?.doc?.name, version: frm?.events?.__mks_task_tab_version }
+			);
+		} catch (e) {
+			// noop
+		}
 		frm.events.render_project_task_tab(frm);
 	},
 
 	render_project_task_tab(frm) {
-		console.log("Project Task Tab: Starting render...");
-		console.log("Project Task Tab: Fields available:", Object.keys(frm.fields_dict));
+		console.log("[MKS][TASK TAB] Starting render", {
+			project: frm?.doc?.name,
+			version: frm?.events?.__mks_task_tab_version,
+			fields_available: Object.keys(frm.fields_dict || {}),
+		});
 		
 		const field = frm.fields_dict.custom_project_tasks_html;
 		if (!field) {
-			console.warn("Project Task Tab: HTML field 'custom_project_tasks_html' not found!");
+			console.warn("[MKS][TASK TAB] HTML field 'custom_project_tasks_html' not found!", {
+				version: frm?.events?.__mks_task_tab_version,
+			});
 			frappe.msgprint({
 				title: __("Debug Info"),
 				message: __("Custom field 'custom_project_tasks_html' not found. Please reload the page."),
@@ -33,7 +66,9 @@ frappe.ui.form.on("Project", {
 			return;
 		}
 		
-		console.log("Project Task Tab: Field found, rendering table...");
+		console.log("[MKS][TASK TAB] Field found, rendering table...", {
+			version: frm?.events?.__mks_task_tab_version,
+		});
 
 		const wrapper = field.$wrapper;
 		wrapper.empty().addClass("project-task-tab-wrapper").css({
@@ -49,6 +84,9 @@ frappe.ui.form.on("Project", {
 			);
 			return;
 		}
+
+		// Track selected tasks explicitly (prevents accidental delete when DOM state is wrong)
+		frm.__selected_task_names = new Set();
 
 		const header = $(`
 			<style>
@@ -99,10 +137,17 @@ frappe.ui.form.on("Project", {
 			</style>
 			<div class="d-flex justify-content-between align-items-center mb-3 project-tasks-header">
 				<div>
-					<div class="h6 mb-0">📋 ${__("Project Tasks")}</div>
-					<small>Click cells with 📝 to edit inline. Parent tasks (blue) auto-update from children.</small>
+					<div class="h6 mb-0">📋 ${__("Project Tasks")}
+						<span class="badge bg-dark ms-2" style="font-size: 10px; opacity: 0.85;">
+							MKS <span data-role="mks-task-tab-version">unknown</span>
+						</span>
+					</div>
+					<small>${__("Click cells with 📝 to edit inline. Parent tasks (blue) auto-update from children.")}</small>
 				</div>
 				<div>
+					<button class="btn btn-sm btn-danger me-2" data-role="delete-selected" title="${__("Delete Selected Tasks")}">
+						<svg class="icon icon-sm"><use href="#icon-delete"></use></svg> ${__("Delete Selected")}
+					</button>
 					<button class="btn btn-sm btn-light me-1" data-role="expand-all" title="${__("Expand All")}">
 						▼ ${__("Expand")}
 					</button>
@@ -126,9 +171,13 @@ frappe.ui.form.on("Project", {
 			<style>
 				/* Enhanced table wrapper */
 				.project-task-tab-wrapper {
-					font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+					font-family: 'Cairo', sans-serif !important;
 				}
 				
+				.project-task-tab-wrapper * {
+					font-family: 'Cairo', sans-serif !important;
+				}
+
 				/* Table styling */
 				.project-task-table-wrapper {
 					border-radius: 8px;
@@ -239,11 +288,18 @@ frappe.ui.form.on("Project", {
 				}
 				
 				/* WBS badge */
-				.project-task-table-wrapper td:nth-child(2) {
-					font-family: 'Courier New', monospace;
+				.project-task-table-wrapper td:nth-child(3) {
+					font-family: 'Cairo', sans-serif !important;
 					font-weight: 600;
 					color: #6c757d;
 					font-size: 11px;
+				}
+
+				/* Task subject cell should match Cairo */
+				.project-task-table-wrapper .task-subject,
+				.project-task-table-wrapper .task-subject a {
+					font-family: 'Cairo', sans-serif !important;
+					font-weight: 600;
 				}
 				
 				/* Status badges */
@@ -370,20 +426,40 @@ frappe.ui.form.on("Project", {
 					vertical-align: middle;
 				}
 				
+				/* Checkbox styling */
+				.task-checkbox {
+					cursor: pointer;
+					width: 18px;
+					height: 18px;
+					vertical-align: middle;
+				}
+				
+				.task-row-selected {
+					background-color: #fff3cd !important;
+				}
+				
+				.task-row-selected:hover {
+					background-color: #ffe69c !important;
+				}
+				
 				/* Minimum column widths */
-				.project-task-table-wrapper th:nth-child(1) { min-width: 220px; }
-				.project-task-table-wrapper th:nth-child(2) { min-width: 60px; }
-				.project-task-table-wrapper th:nth-child(3) { min-width: 120px; }
-				.project-task-table-wrapper th:nth-child(4) { min-width: 100px; }
-				.project-task-table-wrapper th:nth-child(5) { min-width: 130px; }
+				.project-task-table-wrapper th:nth-child(1) { min-width: 40px; }
+				.project-task-table-wrapper th:nth-child(2) { min-width: 220px; }
+				.project-task-table-wrapper th:nth-child(3) { min-width: 60px; }
+				.project-task-table-wrapper th:nth-child(4) { min-width: 120px; }
+				.project-task-table-wrapper th:nth-child(5) { min-width: 100px; }
 				.project-task-table-wrapper th:nth-child(6) { min-width: 130px; }
-				.project-task-table-wrapper th:nth-child(9) { min-width: 130px; }
+				.project-task-table-wrapper th:nth-child(7) { min-width: 130px; }
 				.project-task-table-wrapper th:nth-child(10) { min-width: 130px; }
+				.project-task-table-wrapper th:nth-child(11) { min-width: 130px; }
 			</style>
 			<div class="table-responsive project-task-table-wrapper">
 				<table class="table table-bordered table-sm align-middle mb-0">
 					<thead class="table-light">
 						<tr>
+							<th style="min-width: 40px; text-align: center;">
+								<input type="checkbox" class="task-checkbox" data-role="select-all" title="${__("Select All")}">
+							</th>
 							<th style="min-width: 220px;">
 								<svg class="icon icon-sm text-primary"><use href="#icon-task"></use></svg>
 								${__("Task Name")}
@@ -430,6 +506,19 @@ frappe.ui.form.on("Project", {
 		`);
 
 		wrapper.append(header, tableWrapper, emptyState, loadingState);
+		
+		// Set visible version label (template string cannot safely interpolate frm)
+		try {
+			const v = frm?.events?.__mks_task_tab_version || "unknown";
+			header.find('[data-role="mks-task-tab-version"]').text(v);
+		} catch (e) {
+			// noop
+		}
+		console.log("[MKS][TASK TAB] Header + Table injected into DOM", {
+			version: frm?.events?.__mks_task_tab_version,
+			has_delete_selected_btn: header.find("[data-role='delete-selected']").length,
+			has_select_all: wrapper.find("[data-role='select-all']").length,
+		});
 
 		header.find("[data-role='add-task']").on("click", () => {
 			frm.events.open_project_task_dialog(frm);
@@ -449,6 +538,24 @@ frappe.ui.form.on("Project", {
 		
 		header.find("[data-role='collapse-all']").on("click", () => {
 			frm.events.collapse_all_tasks(frm);
+		});
+		
+		header.find("[data-role='delete-selected']").on("click", () => {
+			console.log("[MKS][TASK TAB] delete-selected clicked", {
+				version: frm?.events?.__mks_task_tab_version,
+			});
+			frm.events.delete_selected_tasks(frm);
+		});
+		
+		// Select all checkbox handler
+		wrapper.on("change", "[data-role='select-all']", function() {
+			const isChecked = $(this).prop("checked");
+			console.log("[MKS][TASK TAB] select-all changed", {
+				checked: isChecked,
+				version: frm?.events?.__mks_task_tab_version,
+			});
+			// Update all row checkboxes and selection Set
+			wrapper.find(".task-row-checkbox").prop("checked", isChecked).trigger("change");
 		});
 
 		frm.events.load_project_tasks(frm);
@@ -509,6 +616,11 @@ frappe.ui.form.on("Project", {
 		}
 
 		const wrapper = field.$wrapper;
+		
+		// Reset selection state on every reload/render
+		frm.__selected_task_names = new Set();
+		wrapper.find("[data-role='select-all']").prop("checked", false).prop("indeterminate", false);
+
 		const tableBody = wrapper.find("tbody");
 		const emptyState = wrapper.find("[data-role='empty']");
 		const loadingState = wrapper.find("[data-role='loading']");
@@ -517,17 +629,26 @@ frappe.ui.form.on("Project", {
 		emptyState.addClass("d-none");
 		loadingState.removeClass("d-none");
 
-		console.log("Project Task Tab: Fetching tasks for project:", frm.doc.name);
+		console.log("[MKS][TASK TAB] Fetching tasks for project", {
+			project: frm?.doc?.name,
+			version: frm?.events?.__mks_task_tab_version,
+		});
 		
 		frappe.call({
 			method: "milestoneksa.api.project_tasks.get_project_tasks",
 			args: { project: frm.doc.name },
 			callback: (r) => {
 				loadingState.addClass("d-none");
-				console.log("Project Task Tab: API response:", r);
+				console.log("[MKS][TASK TAB] get_project_tasks response", {
+					version: frm?.events?.__mks_task_tab_version,
+					has_message: !!r?.message,
+					task_count: r?.message?.tasks?.length,
+				});
 
 				if (!r || !r.message) {
-					console.warn("Project Task Tab: No data returned");
+					console.warn("[MKS][TASK TAB] No data returned", {
+						version: frm?.events?.__mks_task_tab_version,
+					});
 					emptyState.removeClass("d-none");
 					return;
 				}
@@ -547,6 +668,7 @@ frappe.ui.form.on("Project", {
 
 				frm.__project_tasks_data = tasks;
 				frm.events.render_task_hierarchy(frm, tasks, tableBody);
+				frm.events.update_select_all_checkbox(frm);
 			},
 			error: (err) => {
 				console.error("Project Task Tab: API Error:", err);
@@ -624,6 +746,9 @@ frappe.ui.form.on("Project", {
 			    data-parent="${frappe.utils.escape_html(task.parent_task || '')}"
 			    data-level="${level}"
 			    class="${hasChildren ? 'table-primary parent-task' : 'child-task'}">
+				<td style="text-align: center; padding-left: 8px;">
+					<input type="checkbox" class="task-checkbox task-row-checkbox" data-task="${frappe.utils.escape_html(task.name)}">
+				</td>
 				<td class="task-subject" style="padding-left: ${indent + 10}px;"></td>
 				<td>${frappe.utils.escape_html(task.wbs || "")}</td>
 				<td class="editable-cell" data-field="status">${frappe.utils.escape_html(task.status || "")}</td>
@@ -641,8 +766,11 @@ frappe.ui.form.on("Project", {
 					<button class="btn btn-link btn-sm p-0 me-1" data-role="add-child" title="${__("Add Child Task")}">
 						<svg class="icon icon-sm"><use href="#icon-add"></use></svg>
 					</button>
-					<button class="btn btn-link btn-sm p-0" data-role="edit-task" title="${__("Edit")}">
+					<button class="btn btn-link btn-sm p-0 me-1" data-role="edit-task" title="${__("Edit")}">
 						<svg class="icon icon-sm"><use href="#icon-edit"></use></svg>
+					</button>
+					<button class="btn btn-link btn-sm p-0 text-danger" data-role="delete-task" title="${__("Delete Task")}">
+						<svg class="icon icon-sm"><use href="#icon-delete"></use></svg>
 					</button>
 				</td>
 			</tr>
@@ -688,6 +816,34 @@ frappe.ui.form.on("Project", {
 		// Edit task button
 		row.find("[data-role='edit-task']").on("click", () => {
 			frm.events.open_project_task_dialog(frm, task);
+		});
+		
+		// Delete task button
+		row.find("[data-role='delete-task']").on("click", () => {
+			frm.events.delete_single_task(frm, task);
+		});
+		
+		// Checkbox change handler
+		row.find(".task-row-checkbox").on("change", function() {
+			const isChecked = $(this).prop("checked");
+			const taskName = $(this).data("task");
+			
+			if (!frm.__selected_task_names) {
+				frm.__selected_task_names = new Set();
+			}
+			
+			if (isChecked) {
+				frm.__selected_task_names.add(taskName);
+			} else {
+				frm.__selected_task_names.delete(taskName);
+			}
+			
+			if (isChecked) {
+				row.addClass("task-row-selected");
+			} else {
+				row.removeClass("task-row-selected");
+			}
+			frm.events.update_select_all_checkbox(frm);
 		});
 
 		return row;
@@ -948,6 +1104,11 @@ frappe.ui.form.on("Project", {
 				parent_task: task.parent_task,
 				description: task.description,
 			});
+			
+			// Add delete button when editing
+			dialog.add_custom_action(__("Delete"), () => {
+				frm.events.delete_single_task(frm, task, dialog);
+			}, "btn-danger");
 		}
 
 		dialog.show();
@@ -985,6 +1146,148 @@ frappe.ui.form.on("Project", {
 				frm.events.load_project_tasks(frm);
 			},
 		});
+	},
+	
+	delete_selected_tasks(frm) {
+		const field = frm.fields_dict.custom_project_tasks_html;
+		if (!field) return;
+		
+		const wrapper = field.$wrapper;
+		
+		// SAFETY: never delete unless user explicitly selected rows
+		const selected = Array.from(frm.__selected_task_names || []);
+		if (!selected.length) {
+			frappe.msgprint({
+				title: __("No Tasks Selected"),
+				message: __("Please select at least one task to delete."),
+				indicator: "orange"
+			});
+			return;
+		}
+		const taskNames = selected;
+		const taskCount = taskNames.length;
+		
+		frappe.confirm(
+			__(
+				"Are you sure you want to FORCE delete {0} selected task(s) AND all connected tasks (children + dependent tasks)? This action cannot be undone.",
+				[taskCount]
+			),
+			() => {
+				// User confirmed
+				frappe.call({
+					method: "milestoneksa.api.project_tasks.delete_project_tasks",
+					args: {
+						task_names: taskNames,
+						force: 1,
+						delete_connected: 1,
+					},
+					freeze: true,
+					freeze_message: __("Deleting tasks..."),
+					callback: (r) => {
+						const deleted_count = r?.message?.deleted_count ?? taskCount;
+						frappe.show_alert({
+							message: __("{0} task(s) deleted successfully (including connected tasks)", [deleted_count]),
+							indicator: "green"
+						});
+						frm.events.load_project_tasks(frm);
+					},
+					error: (err) => {
+						console.error("Error deleting tasks:", err);
+						frappe.msgprint({
+							title: __("Error"),
+							message: __("Failed to delete tasks. Please check console for details."),
+							indicator: "red"
+						});
+					}
+				});
+			},
+			() => {
+				// User cancelled - do nothing
+			}
+		);
+	},
+	
+	delete_single_task(frm, task, dialog = null) {
+		if (!task || !task.name) {
+			return;
+		}
+		
+		const taskName = task.name;
+		const taskSubject = task.subject || taskName;
+		
+		frappe.confirm(
+			__(
+				"Are you sure you want to FORCE delete the task '{0}' AND all connected tasks (children + dependent tasks)? This action cannot be undone.",
+				[taskSubject]
+			),
+			() => {
+				// User confirmed
+				if (dialog) {
+					dialog.hide();
+				}
+				
+				frappe.call({
+					method: "milestoneksa.api.project_tasks.delete_project_tasks",
+					args: {
+						task_names: [taskName],
+						force: 1,
+						delete_connected: 1,
+					},
+					freeze: true,
+					freeze_message: __("Deleting task..."),
+					callback: (r) => {
+						const deleted_count = r?.message?.deleted_count ?? 1;
+						frappe.show_alert({
+							message: __("Deleted {0} task(s) (including connected tasks)", [deleted_count]),
+							indicator: "green"
+						});
+						frm.events.load_project_tasks(frm);
+					},
+					error: (err) => {
+						console.error("Error deleting task:", err);
+						frappe.msgprint({
+							title: __("Error"),
+							message: __("Failed to delete task. Please check console for details."),
+							indicator: "red"
+						});
+					}
+				});
+			},
+			() => {
+				// User cancelled - do nothing
+			}
+		);
+	},
+	
+	update_select_all_checkbox(frm) {
+		const field = frm.fields_dict.custom_project_tasks_html;
+		if (!field) return;
+		
+		const wrapper = field.$wrapper;
+		const allCheckboxes = wrapper.find(".task-row-checkbox");
+		const checkedCheckboxes = wrapper.find(".task-row-checkbox:checked");
+		const selectAllCheckbox = wrapper.find("[data-role='select-all']");
+		
+		// Keep Set in sync with DOM state (extra safety)
+		frm.__selected_task_names = new Set(
+			checkedCheckboxes.map(function() { return $(this).data("task"); }).get()
+		);
+		
+		if (allCheckboxes.length === 0) {
+			selectAllCheckbox.prop("checked", false);
+			return;
+		}
+		
+		// Update select all checkbox state
+		if (checkedCheckboxes.length === 0) {
+			selectAllCheckbox.prop("indeterminate", false);
+			selectAllCheckbox.prop("checked", false);
+		} else if (checkedCheckboxes.length === allCheckboxes.length) {
+			selectAllCheckbox.prop("indeterminate", false);
+			selectAllCheckbox.prop("checked", true);
+		} else {
+			selectAllCheckbox.prop("indeterminate", true);
+		}
 	},
 });
 

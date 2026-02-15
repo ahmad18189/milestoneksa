@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "attachment_name",
-  "attachment"
+  "attachment",
+  "date"
  ],
  "fields": [
   {
@@ -21,13 +22,23 @@
    "fieldtype": "Attach",
    "in_list_view": 1,
    "label": "Attachment"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-15 08:40:56.650575",
+ "modified": "2026-01-14 11:02:04.494415",
  "modified_by": "Administrator",
  "module": "Milestoneksa",
  "name": "Project Attacment Table",

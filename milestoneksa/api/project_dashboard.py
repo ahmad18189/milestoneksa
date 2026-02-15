@@ -76,28 +76,37 @@ def calculate_health_score(financial, timeline, tasks, team):
     
     # Budget Health (30 points)
     budget_score = 0
-    if financial.get("budget_health") == "good":
-        budget_score = 30
-    elif financial.get("budget_health") == "warning":
-        budget_score = 20
-    elif financial.get("budget_health") == "danger":
-        budget_score = 10
+    estimated_budget = flt(financial.get("estimated_budget", 0))
+    if not estimated_budget:
+        # No budget configured => do NOT award a near-full score
+        budget_score = 15
     else:
-        budget_score = 15  # No budget set
+        if financial.get("budget_health") == "good":
+            budget_score = 30
+        elif financial.get("budget_health") == "warning":
+            budget_score = 20
+        elif financial.get("budget_health") == "danger":
+            budget_score = 10
+        else:
+            budget_score = 15
     
     # Schedule Health (30 points)
     schedule_score = 0
-    pct_complete = flt(timeline.get("percent_complete", 0))
+    expected_end = timeline.get("expected_end")
     delay_days = flt(timeline.get("delay_days", 0))
-    
-    if timeline.get("status") == "on-track":
-        schedule_score = 30
-    elif delay_days <= 7:
-        schedule_score = 20
-    elif delay_days <= 30:
-        schedule_score = 10
+
+    # If project has no expected end date, treat schedule as unknown/needs setup
+    if not expected_end:
+        schedule_score = 15
     else:
-        schedule_score = 5
+        if timeline.get("status") == "on-track":
+            schedule_score = 30
+        elif delay_days <= 7:
+            schedule_score = 20
+        elif delay_days <= 30:
+            schedule_score = 10
+        else:
+            schedule_score = 5
     
     # Task Health (25 points)
     task_score = 0
@@ -209,7 +218,9 @@ def get_timeline_metrics(project: str, project_doc):
     status = "on-track"
     delay_days = 0
     
-    if exp_end:
+    if not exp_end:
+        status = "no-plan"
+    elif exp_end:
         if act_end:
             # Project completed
             delay_days = (getdate(act_end) - getdate(exp_end)).days
@@ -225,15 +236,36 @@ def get_timeline_metrics(project: str, project_doc):
         if days_remaining < 0:
             days_remaining = 0
     
-    # Milestone status
-    milestones = frappe.get_all(
+    # Milestone status + details for dashboard card
+    milestone_rows = frappe.get_all(
         "Task",
         filters={"project": project, "is_milestone": 1},
-        fields=["name", "status", "exp_end_date"]
+        fields=["name", "subject", "description", "status", "exp_end_date"],
+        order_by="exp_end_date asc, modified desc",
     )
-    
-    completed_milestones = len([m for m in milestones if m.status == "Completed"])
-    total_milestones = len(milestones)
+
+    # Treat Cancelled milestones as not part of completion KPI
+    active_milestones = [m for m in milestone_rows if (m.status or "") != "Cancelled"]
+
+    completed_items = [m for m in active_milestones if (m.status or "") == "Completed"]
+    remaining_items = [m for m in active_milestones if (m.status or "") != "Completed"]
+
+    total_milestones = len(active_milestones)
+    completed_milestones = len(completed_items)
+    pending_milestones = len(remaining_items)
+
+    def _to_item(m):
+        return {
+            "name": m.name,
+            "subject": (m.subject or m.name),
+            "description": (m.description or ""),
+            "status": (m.status or "Open"),
+            "exp_end_date": m.exp_end_date,
+        }
+
+    # Keep payload small (UI will show "and X more")
+    completed_preview = [_to_item(m) for m in completed_items[:5]]
+    remaining_preview = [_to_item(m) for m in remaining_items[:5]]
     
     return {
         "expected_start": exp_start,
@@ -247,7 +279,11 @@ def get_timeline_metrics(project: str, project_doc):
         "milestones": {
             "total": total_milestones,
             "completed": completed_milestones,
-            "pending": total_milestones - completed_milestones,
+            "pending": pending_milestones,
+            "completed_tasks": completed_preview,
+            "remaining_tasks": remaining_preview,
+            "completed_more": max(completed_milestones - len(completed_preview), 0),
+            "remaining_more": max(pending_milestones - len(remaining_preview), 0),
         }
     }
 
@@ -261,25 +297,28 @@ def get_task_metrics(project: str, from_date=None, to_date=None):
         filters=filters,
         fields=["name", "status", "priority", "exp_end_date", "is_group"]
     )
+
+    # Exclude group (parent) tasks from KPI calculations; they are containers
+    leaf_tasks = [t for t in all_tasks if not cint(t.is_group)]
     
     # Count by status
     status_counts = {}
-    for task in all_tasks:
+    for task in leaf_tasks:
         status = task.status or "Open"
         status_counts[status] = status_counts.get(status, 0) + 1
     
     # Count by priority
     priority_counts = {}
-    for task in all_tasks:
+    for task in leaf_tasks:
         priority = task.priority or "Medium"
         priority_counts[priority] = priority_counts.get(priority, 0) + 1
     
     # Count overdue
     today = getdate()
-    overdue = [t for t in all_tasks if t.exp_end_date and getdate(t.exp_end_date) < today and t.status not in ("Completed", "Cancelled")]
+    overdue = [t for t in leaf_tasks if t.exp_end_date and getdate(t.exp_end_date) < today and t.status not in ("Completed", "Cancelled")]
     
-    completed = len([t for t in all_tasks if t.status == "Completed"])
-    total = len(all_tasks)
+    completed = len([t for t in leaf_tasks if t.status == "Completed"])
+    total = len(leaf_tasks)
     
     return {
         "total": total,

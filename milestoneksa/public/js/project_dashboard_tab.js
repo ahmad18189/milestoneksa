@@ -163,6 +163,65 @@ frappe.ui.form.on("Project", {
 					border-bottom: 2px solid #e9ecef;
 				}
 				
+				/* Milestone lists inside milestone summary card */
+				.mks-milestone-lists {
+					margin-top: 14px;
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+					gap: 12px;
+				}
+				.mks-milestone-box {
+					border: 1px solid #e9ecef;
+					border-radius: 10px;
+					padding: 12px;
+					background: #fbfcfd;
+				}
+				.mks-milestone-box-title {
+					font-size: 12px;
+					font-weight: 700;
+					color: #495057;
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					margin-bottom: 8px;
+				}
+				.mks-milestone-item {
+					display: block;
+					padding: 8px 10px;
+					border-radius: 8px;
+					background: #fff;
+					border: 1px solid #eef1f4;
+					margin-bottom: 8px;
+					text-decoration: none;
+					color: inherit;
+				}
+				.mks-milestone-item:hover {
+					border-color: #cfe2ff;
+					box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+				}
+				.mks-milestone-subject {
+					font-weight: 600;
+					font-size: 13px;
+					color: #212529;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+				}
+				.mks-milestone-desc {
+					font-size: 12px;
+					color: #6c757d;
+					margin-top: 4px;
+					display: -webkit-box;
+					-webkit-line-clamp: 2;
+					-webkit-box-orient: vertical;
+					overflow: hidden;
+				}
+				.mks-milestone-more {
+					font-size: 11px;
+					color: #6c757d;
+					margin-top: 2px;
+				}
+				
 				/* Date Filter */
 				.dashboard-date-filter {
 					background: white;
@@ -458,41 +517,41 @@ frappe.ui.form.on("Project", {
 		if (level === "excellent") {
 			color = "#28a745";
 			bgColor = "#d4edda";
-			label = "Excellent";
+			label = __("Excellent");
 		} else if (level === "good") {
 			color = "#17a2b8";
 			bgColor = "#d1ecf1";
-			label = "Good";
+			label = __("Good");
 		} else if (level === "warning") {
 			color = "#ffc107";
 			bgColor = "#fff3cd";
-			label = "Needs Attention";
+			label = __("Needs Attention");
 		} else {
 			color = "#dc3545";
 			bgColor = "#f8d7da";
-			label = "At Risk";
+			label = __("At Risk");
 		}
 		
 		const card = $(`
 			<div class="kpi-card ${level}" style="grid-column: span 1; border-left-color: ${color};">
 				<div class="kpi-card-title">🏆 ${__("Project Health")}</div>
 				<div class="kpi-card-value" style="color: ${color};">${score}/100</div>
-				<div class="kpi-card-subtitle">${__(label)}</div>
+					<div class="kpi-card-subtitle">${label}</div>
 				<div class="health-breakdown mt-3" style="font-size: 11px;">
 					<div class="d-flex justify-content-between mb-1">
-						<span>💰 Budget:</span>
+							<span>💰 ${__("Budget")}:</span>
 						<span class="fw-bold">${components.budget || 0}/30</span>
 					</div>
 					<div class="d-flex justify-content-between mb-1">
-						<span>📅 Schedule:</span>
+							<span>📅 ${__("Schedule")}:</span>
 						<span class="fw-bold">${components.schedule || 0}/30</span>
 					</div>
 					<div class="d-flex justify-content-between mb-1">
-						<span>✅ Tasks:</span>
+							<span>✅ ${__("Tasks")}:</span>
 						<span class="fw-bold">${components.tasks || 0}/25</span>
 					</div>
 					<div class="d-flex justify-content-between">
-						<span>👥 Team:</span>
+							<span>👥 ${__("Team")}:</span>
 						<span class="fw-bold">${components.team || 0}/15</span>
 					</div>
 				</div>
@@ -696,7 +755,8 @@ frappe.ui.form.on("Project", {
 		`);
 		
 		const byPriority = tasks.by_priority || {};
-		const labels = Object.keys(byPriority);
+		// Translate priority labels (e.g. "High") for Arabic UI
+		const labels = Object.keys(byPriority).map((label) => __(label));
 		const values = Object.values(byPriority);
 		
 		if (labels.length === 0) {
@@ -838,7 +898,8 @@ frappe.ui.form.on("Project", {
 		const byStatus = tasks.by_status || {};
 		console.log("🔍 Dashboard: Task by_status data", byStatus);
 		
-		const labels = Object.keys(byStatus);
+		// Translate status labels (e.g. "Open") for Arabic UI
+		const labels = Object.keys(byStatus).map((label) => __(label));
 		const values = Object.values(byStatus);
 		console.log("🔍 Dashboard: Chart labels/values", {labels, values});
 		
@@ -1056,7 +1117,7 @@ frappe.ui.form.on("Project", {
 		<!DOCTYPE html>
 		<html>
 		<head>
-			<title>Project Dashboard - ${project_info.project_name || project_info.name}</title>
+			<title>${__("Project Dashboard")} - ${project_info.project_name || project_info.name}</title>
 			<style>
 				@media print {
 					@page { margin: 1cm; }
@@ -1183,19 +1244,19 @@ frappe.ui.form.on("Project", {
 					<div class="subtitle">${(financial.profit_margin_pct || 0).toFixed(1)}% margin</div>
 				</div>
 				<div class="kpi-box">
-					<h3>📅 Timeline</h3>
-					<div class="value">${timeline.days_remaining >= 0 ? timeline.days_remaining + ' days left' : 'Completed'}</div>
-					<div class="subtitle">${(timeline.percent_complete || 0)}% complete</div>
+					<h3>📅 ${__("Timeline")}</h3>
+					<div class="value">${timeline.days_remaining >= 0 ? timeline.days_remaining + ' ' + __("days left") : __("Completed")}</div>
+					<div class="subtitle">${(timeline.percent_complete || 0)}% ${__("complete")}</div>
 				</div>
 				<div class="kpi-box">
-					<h3>✅ Tasks</h3>
+					<h3>✅ ${__("Tasks")}</h3>
 					<div class="value">${tasks.completed || 0}/${tasks.total || 0}</div>
-					<div class="subtitle">${tasks.overdue ? tasks.overdue + ' overdue' : 'None overdue'}</div>
+					<div class="subtitle">${tasks.overdue ? tasks.overdue + ' ' + __("overdue") : __("None overdue")}</div>
 				</div>
 				<div class="kpi-box">
-					<h3>👥 Team</h3>
-					<div class="value">${team.total_hours || 0} hrs</div>
-					<div class="subtitle">${team.team_size || 0} members</div>
+					<h3>👥 ${__("Team")}</h3>
+					<div class="value">${team.total_hours || 0} ${__("hrs")}</div>
+					<div class="subtitle">${team.team_size || 0} ${__("members")}</div>
 				</div>
 			</div>
 			
@@ -1328,6 +1389,10 @@ frappe.ui.form.on("Project", {
 		const total = milestones.total || 0;
 		const completed = milestones.completed || 0;
 		const pending = milestones.pending || 0;
+		const completedTasks = milestones.completed_tasks || [];
+		const remainingTasks = milestones.remaining_tasks || [];
+		const completedMore = milestones.completed_more || 0;
+		const remainingMore = milestones.remaining_more || 0;
 		
 		const summary = $(`
 			<div>
@@ -1349,8 +1414,67 @@ frappe.ui.form.on("Project", {
 				</div>
 			</div>
 		`);
+
+		const lists = $(`
+			<div class="mks-milestone-lists">
+				<div class="mks-milestone-box" data-role="milestone-done">
+					<div class="mks-milestone-box-title">
+						<span>✅ ${__("Done Milestones")}</span>
+						<span class="text-muted small">${completed}</span>
+					</div>
+					<div data-role="items"></div>
+					<div class="mks-milestone-more d-none" data-role="more"></div>
+				</div>
+				<div class="mks-milestone-box" data-role="milestone-remaining">
+					<div class="mks-milestone-box-title">
+						<span>⏳ ${__("Remaining Milestones")}</span>
+						<span class="text-muted small">${pending}</span>
+					</div>
+					<div data-role="items"></div>
+					<div class="mks-milestone-more d-none" data-role="more"></div>
+				</div>
+			</div>
+		`);
+
+		const esc = (v) => frappe.utils.escape_html(v || "");
+		const stripHtml = (html) => $("<div>").html(html || "").text();
+
+		const renderItems = (box, items, emptyText, moreCount) => {
+			const itemsWrap = box.find("[data-role='items']");
+			itemsWrap.empty();
+
+			if (!items || !items.length) {
+				itemsWrap.html(`<div class="text-center text-muted py-2 small">${__(emptyText)}</div>`);
+			} else {
+				items.forEach((t) => {
+					const subject = esc(t.subject || t.name);
+					const descText = esc(stripHtml(t.description || ""));
+					const href = `/app/task/${encodeURIComponent(t.name)}`;
+					const item = $(`
+						<a class="mks-milestone-item" href="${href}" title="${subject}">
+							<div class="mks-milestone-subject">${subject}</div>
+							${descText ? `<div class="mks-milestone-desc" title="${descText}">${descText}</div>` : ""}
+						</a>
+					`);
+					item.on("click", (e) => {
+						e.preventDefault();
+						frappe.set_route("Form", "Task", t.name);
+					});
+					itemsWrap.append(item);
+				});
+			}
+
+			if (moreCount && moreCount > 0) {
+				box.find("[data-role='more']")
+					.removeClass("d-none")
+					.text(__("and {0} more…", [moreCount]));
+			}
+		};
+
+		renderItems(lists.find("[data-role='milestone-done']"), completedTasks, "No completed milestones", completedMore);
+		renderItems(lists.find("[data-role='milestone-remaining']"), remainingTasks, "No remaining milestones", remainingMore);
 		
-		card.find(".milestone-summary").append(summary);
+		card.find(".milestone-summary").append(summary, lists);
 		return card;
 	},
 });

@@ -20,7 +20,9 @@
   "project",
   "priority",
   "section_break_bkfz",
-  "final_remarks"
+  "final_remarks",
+  "section_break_workflow",
+  "workflow_activity_log"
  ],
  "fields": [
   {
@@ -111,12 +113,25 @@
    "fieldtype": "Select",
    "label": "Priority",
    "options": "Normal\nHigh\nUrgent\nInformative"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_workflow",
+   "fieldtype": "Section Break",
+   "label": "Workflow History"
+  },
+  {
+   "fieldname": "workflow_activity_log",
+   "fieldtype": "Table",
+   "label": "Workflow Activity Log",
+   "options": "Payment Approval Request Workflow Log",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-22 14:53:36.953800",
+ "modified": "2026-02-12 10:32:10.388419",
  "modified_by": "m.alnasser@milestoneksa.com",
  "module": "Milestoneksa",
  "name": "Payment Approval Request",

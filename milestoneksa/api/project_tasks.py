@@ -299,3 +299,112 @@ def recalculate_all_project_parents(project: str):
         "total_parents": len(parent_task_names)
     }
 
+
+@frappe.whitelist()
+def delete_project_tasks(task_names, force: int = 1, delete_connected: int = 1):
+    """
+    Delete tasks (forced) + optionally delete all connected tasks.
+
+    Connected tasks includes:
+    - All descendants in the task tree (via lft/rgt nested set)
+    - Tasks that depend on any of the tasks (Task Depends On reverse links)
+    """
+
+    if not task_names:
+        frappe.throw(_("Task names are required"))
+
+    if isinstance(task_names, str):
+        task_names = frappe.parse_json(task_names)
+
+    if not isinstance(task_names, list):
+        task_names = [task_names]
+
+    force = cint(force)
+    delete_connected = cint(delete_connected)
+
+    # Clean input
+    roots = [t for t in task_names if t]
+    if not roots:
+        frappe.throw(_("Task names are required"))
+
+    def _expand_descendants(names: set[str]) -> set[str]:
+        """Return names + all descendants (nested set)."""
+        # Get lft/rgt for current set
+        rows = frappe.get_all("Task", filters={"name": ["in", list(names)]}, fields=["name", "lft", "rgt"])
+        if not rows:
+            return set()
+
+        descendants: set[str] = set()
+        for r in rows:
+            if r.lft is None or r.rgt is None:
+                continue
+            # All nodes inside the interval are descendants including self
+            interval = frappe.get_all(
+                "Task",
+                filters={"lft": [">=", r.lft], "rgt": ["<=", r.rgt]},
+                fields=["name"],
+                limit_page_length=0,
+            )
+            descendants.update(d.name for d in interval if d.name)
+        return descendants
+
+    def _expand_reverse_dependencies(names: set[str]) -> set[str]:
+        """Tasks that depend on given tasks (reverse of Task.depends_on)."""
+        # tabTask Depends On: parent = the Task which has the dependency row; task = referenced Task
+        if not names:
+            return set()
+        parents = frappe.get_all(
+            "Task Depends On",
+            filters={"task": ["in", list(names)]},
+            fields=["parent"],
+            limit_page_length=0,
+        )
+        return set(p.parent for p in parents if p.parent)
+
+    to_delete: set[str] = set(roots)
+
+    if delete_connected:
+        # Expand until stable: descendants + reverse dependencies (+ their descendants)
+        prev_size = -1
+        while prev_size != len(to_delete):
+            prev_size = len(to_delete)
+            # descendants
+            to_delete |= _expand_descendants(to_delete)
+            # reverse dependency parents
+            dep_parents = _expand_reverse_dependencies(to_delete)
+            if dep_parents:
+                to_delete |= dep_parents
+                to_delete |= _expand_descendants(dep_parents)
+
+    # Sort by lft desc to delete children first (avoid nested set issues)
+    lft_rows = frappe.get_all("Task", filters={"name": ["in", list(to_delete)]}, fields=["name", "lft"], limit_page_length=0)
+    lft_map = {r.name: (r.lft or 0) for r in lft_rows}
+    ordered = sorted(list(to_delete), key=lambda n: (lft_map.get(n, 0), n), reverse=True)
+
+    deleted: list[str] = []
+    errors: list[str] = []
+
+    for name in ordered:
+        try:
+            # Force delete bypasses link checks; user explicitly requested "forced"
+            frappe.delete_doc("Task", name, force=force, ignore_permissions=True)
+            deleted.append(name)
+        except frappe.DoesNotExistError:
+            # Ignore if already deleted by cascade
+            continue
+        except Exception as e:
+            msg = f"Failed to delete task {name}: {str(e)}"
+            errors.append(msg)
+            frappe.log_error(msg, "Delete Task Error")
+
+    frappe.db.commit()
+
+    return {
+        "requested": roots,
+        "delete_connected": bool(delete_connected),
+        "force": bool(force),
+        "deleted_count": len(deleted),
+        "deleted_tasks": deleted,
+        "errors": errors,
+    }
+

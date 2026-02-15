@@ -55,14 +55,16 @@ def _create_tasks(doc):
             start_date = today
 
         # Build Task payload (include description in subject)
-        subject = f"PO {doc.name} – {row.description} – p(line {row.idx})"
+        # Handle None values for description
+        description = row.description or f"Payment Schedule Line {row.idx}"
+        subject = f"PO {doc.name} – {description} – p(line {row.idx})"
         task_data = {
             "doctype": "Task",
             "project": project,
-            "subject": project+" - "+row.description,
+            "subject": f"{project} - {description}",
             "description": (
                 f"Purchase Order: {doc.name}\n"
-                f"Description: {row.description}\n"
+                f"Description: {description}\n"
                 f"Amount: {row.payment_amount}\n"
                 f"Due date: {row.due_date}"
             ),

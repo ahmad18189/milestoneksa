@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة مشاريع البناء - Construction Projects Dashboard</title>
+    
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        .dashboard-header h1 {
+            font-size: 48px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .dashboard-header .subtitle {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-header .date-time {
+            font-size: 16px;
+            color: #95a5a6;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Summary Cards Grid */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--card-color), transparent);
+        }
+
+        .summary-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .card-label {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .card-value {
+            font-size: 42px;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: #95a5a6;
+        }
+
+        .card-change {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .change-positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .change-negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Financial Summary */
+        .financial-summary {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .financial-summary h2 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .financial-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .financial-item:hover {
+            transform: scale(1.05);
+        }
+
+        .financial-item-label {
+            font-size: 14px;
+            color: #5a6c7d;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .financial-item-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .chart-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 350px;
+        }
+
+        /* Projects Table */
+        .projects-table {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            margin-bottom: 30px;
+        }
+
+        .projects-table h2 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        th:first-child {
+            border-top-right-radius: 10px;
+        }
+
+        th:last-child {
+            border-top-left-radius: 10px;
+        }
+
+        td {
+            padding: 18px;
+            border-bottom: 1px solid #ecf0f1;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-open {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-completed {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 1s ease-in-out;
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        /* Footer */
+        .footer {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .footer p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-header h1 {
+                font-size: 32px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 12px 8px;
+            }
+        }
+
+        /* Loading Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .summary-card, .chart-container, .projects-table, .financial-summary {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Color Variables */
+        .card-green { --card-color: #29cd42; }
+        .card-blue { --card-color: #5e64ff; }
+        .card-red { --card-color: #ff5858; }
+        .card-orange { --card-color: #ffa00a; }
+        .card-dark-green { --card-color: #10b759; }
+        .card-dark-red { --card-color: #dd1d1d; }
+        .card-purple { --card-color: #764ba2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1>🏗️ لوحة مشاريع البناء</h1>
+            <p class="subtitle">نظرة شاملة على جميع مشاريع البناء - التحليل المالي والتشغيلي</p>
+            <p class="date-time" id="currentDateTime"></p>
+            <button class="refresh-btn" onclick="refreshDashboard()">
+                🔄 تحديث البيانات
+            </button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card card-green">
+                <div class="card-icon">📊</div>
+                <div class="card-label">إجمالي المشاريع النشطة</div>
+                <div class="card-value">15</div>
+                <div class="card-subtitle">مشروع قيد التنفيذ</div>
+                <span class="card-change change-positive">↑ 3 مشاريع جديدة</span>
+            </div>
+
+            <div class="summary-card card-blue">
+                <div class="card-icon">💰</div>
+                <div class="card-label">إجمالي قيمة المشاريع</div>
+                <div class="card-value">15.5M</div>
+                <div class="card-subtitle">ريال سعودي</div>
+                <span class="card-change change-positive">↑ 12% هذا الشهر</span>
+            </div>
+
+            <div class="summary-card card-red">
+                <div class="card-icon">📉</div>
+                <div class="card-label">إجمالي التكاليف الفعلية</div>
+                <div class="card-value">12.3M</div>
+                <div class="card-subtitle">ريال سعودي</div>
+                <span class="card-change change-negative">↑ 8% عن المتوقع</span>
+            </div>
+
+            <div class="summary-card card-orange">
+                <div class="card-icon">📈</div>
+                <div class="card-label">هامش الربح الإجمالي</div>
+                <div class="card-value">3.2M</div>
+                <div class="card-subtitle">نسبة 20.65%</div>
+                <span class="card-change change-positive">↑ أداء ممتاز</span>
+            </div>
+
+            <div class="summary-card card-dark-green">
+                <div class="card-icon">✅</div>
+                <div class="card-label">المهام المكتملة</div>
+                <div class="card-value">245</div>
+                <div class="card-subtitle">مهمة منجزة</div>
+                <span class="card-change change-positive">↑ 45 مهمة هذا الأسبوع</span>
+            </div>
+
+            <div class="summary-card card-dark-red">
+                <div class="card-icon">⚠️</div>
+                <div class="card-label">المهام المتأخرة</div>
+                <div class="card-value">18</div>
+                <div class="card-subtitle">مهمة متأخرة</div>
+                <span class="card-change change-negative">↓ تحتاج متابعة</span>
+            </div>
+
+            <div class="summary-card card-purple">
+                <div class="card-icon">⏳</div>
+                <div class="card-label">المهام قيد التنفيذ</div>
+                <div class="card-value">67</div>
+                <div class="card-subtitle">مهمة نشطة</div>
+                <span class="card-change change-positive">→ في الموعد</span>
+            </div>
+        </div>
+
+        <!-- Financial Summary -->
+        <div class="financial-summary">
+            <h2>💵 الملخص المالي التفصيلي</h2>
+            <div class="financial-grid">
+                <div class="financial-item">
+                    <div class="financial-item-label">التكلفة المقدرة</div>
+                    <div class="financial-item-value">13.0M</div>
+                </div>
+                <div class="financial-item">
+                    <div class="financial-item-label">تكلفة المشتريات</div>
+                    <div class="financial-item-value">8.5M</div>
+                </div>
+                <div class="financial-item">
+                    <div class="financial-item-label">تكلفة المواد</div>
+                    <div class="financial-item-value">3.8M</div>
+                </div>
+                <div class="financial-item">
+                    <div class="financial-item-label">المبلغ المفوتر</div>
+                    <div class="financial-item-value">10.2M</div>
+                </div>
+                <div class="financial-item">
+                    <div class="financial-item-label">الفرق (مقدر - فعلي)</div>
+                    <div class="financial-item-value" style="color: #10b759;">+700K</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-title">📊 المشاريع حسب الحالة</div>
+                <div class="chart-canvas">
+                    <canvas id="projectsStatusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">📈 المهام حسب الأولوية</div>
+                <div class="chart-canvas">
+                    <canvas id="tasksPriorityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">💰 التحليل المالي</div>
+                <div class="chart-canvas">
+                    <canvas id="financialChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">📉 تقدم المشاريع الشهري</div>
+                <div class="chart-canvas">
+                    <canvas id="monthlyProgressChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Projects Table -->
+        <div class="projects-table">
+            <h2>🏆 أفضل 5 مشاريع حسب القيمة</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>اسم المشروع</th>
+                        <th>العميل</th>
+                        <th>الحالة</th>
+                        <th>القيمة الإجمالية</th>
+                        <th>التكلفة</th>
+                        <th>هامش الربح</th>
+                        <th>نسبة الربح</th>
+                        <th>نسبة الإنجاز</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>برج المملكة التجاري</strong></td>
+                        <td>شركة التطوير العقاري</td>
+                        <td><span class="status-badge status-open">مفتوح</span></td>
+                        <td><strong>5,500,000</strong> ر.س</td>
+                        <td>4,200,000 ر.س</td>
+                        <td style="color: #10b759;"><strong>1,300,000 ر.س</strong></td>
+                        <td>23.64%</td>
+                        <td>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: 65%"></div>
+                            </div>
+                            <div class="progress-text">65%</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>مجمع الرياض السكني</strong></td>
+                        <td>مجموعة العمران</td>
+                        <td><span class="status-badge status-open">مفتوح</span></td>
+                        <td><strong>3,800,000</strong> ر.س</td>
+                        <td>3,100,000 ر.س</td>
+                        <td style="color: #10b759;"><strong>700,000 ر.س</strong></td>
+                        <td>18.42%</td>
+                        <td>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: 45%"></div>
+                            </div>
+                            <div class="progress-text">45%</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>مشروع جدة بلازا</strong></td>
+                        <td>شركة الإنشاءات الحديثة</td>
+                        <td><span class="status-badge status-open">مفتوح</span></td>
+                        <td><strong>2,900,000</strong> ر.س</td>
+                        <td>2,400,000 ر.س</td>
+                        <td style="color: #10b759;"><strong>500,000 ر.س</strong></td>
+                        <td>17.24%</td>
+                        <td>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: 78%"></div>
+                            </div>
+                            <div class="progress-text">78%</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>مركز الدمام التجاري</strong></td>
+                        <td>الشركة الوطنية للتطوير</td>
+                        <td><span class="status-badge status-open">مفتوح</span></td>
+                        <td><strong>2,100,000</strong> ر.س</td>
+                        <td>1,700,000 ر.س</td>
+                        <td style="color: #10b759;"><strong>400,000 ر.س</strong></td>
+                        <td>19.05%</td>
+                        <td>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: 55%"></div>
+                            </div>
+                            <div class="progress-text">55%</div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>فندق الخليج الفاخر</strong></td>
+                        <td>مجموعة الضيافة العالمية</td>
+                        <td><span class="status-badge status-completed">مكتمل</span></td>
+                        <td><strong>1,200,000</strong> ر.س</td>
+                        <td>900,000 ر.س</td>
+                        <td style="color: #10b759;"><strong>300,000 ر.س</strong></td>
+                        <td>25.00%</td>
+                        <td>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: 100%"></div>
+                            </div>
+                            <div class="progress-text">100%</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🏗️ لوحة مشاريع البناء - Construction Projects Dashboard</p>
+            <p>صنع بـ ❤️ لإدارة مشاريع البناء | Made with ❤️ for Construction Management</p>
+            <p style="margin-top: 10px; font-size: 12px;">© 2025 Milestone KSA | جميع الحقوق محفوظة</p>
+        </div>
+    </div>
+
+    <script>
+        // Update Date and Time
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('currentDateTime').textContent = 
+                now.toLocaleDateString('ar-SA', options);
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
+
+        // Refresh Dashboard
+        function refreshDashboard() {
+            location.reload();
+        }
+
+        // Projects by Status Chart (Donut)
+        const ctx1 = document.getElementById('projectsStatusChart');
+        new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: ['مفتوح', 'مكتمل', 'ملغي'],
+                datasets: [{
+                    data: [15, 8, 2],
+                    backgroundColor: ['#29cd42', '#5e64ff', '#ff5858'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        rtl: true,
+                        labels: {
+                            font: { size: 14, weight: 'bold' },
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' مشروع';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Tasks by Priority Chart (Pie)
+        const ctx2 = document.getElementById('tasksPriorityChart');
+        new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: ['عالية', 'متوسطة', 'منخفضة'],
+                datasets: [{
+                    data: [45, 120, 165],
+                    backgroundColor: ['#ff5858', '#ffa00a', '#10b759'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        rtl: true,
+                        labels: {
+                            font: { size: 14, weight: 'bold' },
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' مهمة';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Financial Chart (Bar)
+        const ctx3 = document.getElementById('financialChart');
+        new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: ['المبيعات', 'التكلفة الفعلية', 'المشتريات', 'المواد', 'المفوتر'],
+                datasets: [{
+                    label: 'المبلغ (مليون ر.س)',
+                    data: [15.5, 12.3, 8.5, 3.8, 10.2],
+                    backgroundColor: ['#5e64ff', '#ff5858', '#ffa00a', '#764ba2', '#10b759'],
+                    borderRadius: 10,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' مليون ر.س';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value + 'M';
+                            },
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Monthly Progress Chart (Line)
+        const ctx4 = document.getElementById('monthlyProgressChart');
+        new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: ['يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر'],
+                datasets: [{
+                    label: 'متوسط نسبة الإنجاز %',
+                    data: [45, 52, 58, 63, 68, 72],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 4,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 3,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        rtl: true,
+                        labels: {
+                            font: { size: 14, weight: 'bold' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Animate progress bars on load
+        window.addEventListener('load', function() {
+            const progressBars = document.querySelectorAll('.progress-bar');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
+

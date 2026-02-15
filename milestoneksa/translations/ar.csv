@@ -709,3 +709,89 @@
 "Cross Section Preview","معاينة المقطع العرضي"
 "Elevation Preview","معاينة الواجهة"
 "Site Plan Preview","معاينة مخطط الموقع"
+"Salary","الراتب"
+"Salary Slip","كشف الراتب"
+"Payslip","قسيمة الدفع"
+"Salary Slip submitted for period from {0} to {1}","تم تقديم كشف الراتب للفترة من {0} إلى {1}"
+"Salary Structure must be submitted before submission of Tax Ememption Declaration","يجب تقديم هيكل الرواتب قبل تقديم بيان الإعفاء الضريبي"
+"Salary Mode","طريقة تحصيل الراتب"
+"Net Pay (in words) will be visible once you save the Salary Slip.","صافي الأجر (بالحروف) تكون مرئية بمجرد حفظ كشف راتب."
+"Repay From Salary","سداد من الراتب"
+"Payroll Entry","دخول الرواتب"
+"Payroll Payable","رواتب واجبة الدفع"
+"Default Payroll Payable Account","الحساب الافتراضي لدفع الرواتب"
+"Please set Default Payroll Payable Account in Company {0}","الرجاء تحديد الحساب افتراضي لدفع الرواتب في الشركة {0}"
+"Please set default account in Salary Component {0}","الرجاء تحديد حساب افتراضي في مكون الراتب {0}"
+"Select Payroll Period","تحديد فترة دفع الرواتب"
+"Payroll Cost Center","مركز تكلفة الرواتب"
+"Project Tasks","مهام المشروع"
+"Delete Selected","حذف المحدد"
+"Delete Selected Tasks","حذف المهام المحددة"
+"Delete Task","حذف المهمة"
+"Select All","تحديد الكل"
+"Expand","توسيع"
+"Expand All","توسيع الكل"
+"Collapse","طي"
+"Collapse All","طي الكل"
+"Recalc Parents","إعادة حساب المهام الرئيسية"
+"Add Task","إضافة مهمة"
+"Task Name","اسم المهمة"
+"Priority","الأولوية"
+"Planned Start","تاريخ البدء المخطط"
+"Planned Finish","تاريخ الانتهاء المخطط"
+"Duration","المدة"
+"Planned Hours","الساعات المخططة"
+"Actual Start","تاريخ البدء الفعلي"
+"Actual End","تاريخ الانتهاء الفعلي"
+"Actual Duration","المدة الفعلية"
+"Actual Hours","الساعات الفعلية"
+"Actions","الإجراءات"
+"Add Child Task","إضافة مهمة فرعية"
+"Edit","تعديل"
+"No Tasks Yet","لا توجد مهام بعد"
+"Loading tasks...","جاري تحميل المهام..."
+"Unable to load tasks. Check console for errors.","تعذر تحميل المهام. تحقق من وحدة التحكم للأخطاء."
+"Error Loading Tasks","خطأ في تحميل المهام"
+"Save the project to manage tasks from this tab.","احفظ المشروع لإدارة المهام من هذا التبويب."
+"Task updated","تم تحديث المهمة"
+"Task created","تم إنشاء المهمة"
+"Deleting task...","جارٍ حذف المهمة..."
+"Deleting tasks...","جارٍ حذف المهام..."
+"Are you sure you want to FORCE delete {0} selected task(s) AND all connected tasks (children + dependent tasks)? This action cannot be undone.","هل أنت متأكد أنك تريد الحذف الإجباري لـ {0} مهمة/مهام محددة مع جميع المهام المرتبطة (الفرعية + المعتمدة)؟ لا يمكن التراجع عن هذا الإجراء."
+"Are you sure you want to FORCE delete the task '{0}' AND all connected tasks (children + dependent tasks)? This action cannot be undone.","هل أنت متأكد أنك تريد الحذف الإجباري للمهمة '{0}' مع جميع المهام المرتبطة (الفرعية + المعتمدة)؟ لا يمكن التراجع عن هذا الإجراء."
+"Click cells with 📝 to edit inline. Parent tasks (blue) auto-update from children.","اضغط على الخلايا التي تحتوي 📝 للتعديل مباشرة. المهام الرئيسية (بالأزرق) يتم تحديثها تلقائياً من المهام الفرعية."
+"Use the Add Task button above to create your first task for this project.","استخدم زر «إضافة مهمة» أعلاه لإنشاء أول مهمة لهذا المشروع."
+"No budget set","لا توجد ميزانية محددة"
+"Project Health","صحة المشروع"
+"Excellent","ممتاز"
+"Good","جيد"
+"Needs Attention","يحتاج إلى متابعة"
+"At Risk","معرّض للخطر"
+"Period","الفترة"
+"This Week","هذا الأسبوع"
+"This Month","هذا الشهر"
+"This Quarter","هذا الربع"
+"All Time","كل الوقت"
+"Cost Trend","اتجاه التكلفة"
+"Tasks by Status","المهام حسب الحالة"
+"Cumulative Cost","التكلفة التراكمية"
+"Tasks Completed (Weekly)","المهام المكتملة (أسبوعيًا)"
+"Tasks Completed","المهام المكتملة"
+"days left","يوم متبقٍ"
+"days delay","يوم تأخير"
+"On schedule","حسب الجدول"
+"complete","مكتمل"
+"Budget","الميزانية"
+"Schedule","الجدول الزمني"
+"Revenue vs Cost","الإيرادات مقابل التكلفة"
+"Cost Breakdown","تفصيل التكلفة"
+"Tasks by Priority","المهام حسب الأولوية"
+"Team Hours Breakdown","تفصيل ساعات الفريق"
+"Overdue Tasks","المهام المتأخرة"
+"Milestones","المعالم"
+"No completion data available","لا توجد بيانات عن المهام المكتملة"
+"No task data available","لا توجد بيانات للمهام"
+"No cost data available","لا توجد بيانات للتكلفة"
+"No timesheet data available","لا توجد بيانات لساعات العمل"
+"Assign team members and log timesheets to see breakdown","قم بتعيين أعضاء الفريق وتسجيل ساعات العمل لعرض التفصيل"
+"milestone completion","نسبة إنجاز المعالم"

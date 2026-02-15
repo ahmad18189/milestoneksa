@@ -1,0 +1,63 @@
+{
+ "cards": [
+  {
+   "card": "Total Active Projects"
+  },
+  {
+   "card": "Total Project Value"
+  },
+  {
+   "card": "Total Actual Cost"
+  },
+  {
+   "card": "Total Gross Margin"
+  },
+  {
+   "card": "Completed Tasks"
+  },
+  {
+   "card": "Overdue Tasks"
+  },
+  {
+   "card": "Active Tasks"
+  }
+ ],
+ "charts": [
+  {
+   "chart": "Projects by Status",
+   "width": "Half"
+  },
+  {
+   "chart": "Tasks by Priority",
+   "width": "Half"
+  },
+  {
+   "chart": "Monthly Project Sales",
+   "width": "Half"
+  },
+  {
+   "chart": "Monthly Project Costs",
+   "width": "Half"
+  },
+  {
+   "chart": "Project Gross Margin",
+   "width": "Half"
+  },
+  {
+   "chart": "Monthly Completed Tasks",
+   "width": "Half"
+  }
+ ],
+ "creation": "2025-11-09 12:10:00.000000",
+ "dashboard_name": "Construction Projects",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "modified": "2025-11-09 12:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Construction Projects",
+ "owner": "Administrator"
+}

@@ -1,0 +1,37 @@
+{
+ "aggregate_function_based_on": "",
+ "color": "#764BA2",
+ "creation": "2025-11-09 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "document_type": "Task",
+ "dynamic_filters_json": "[]",
+ "filters_json": "[[\"Task\",\"status\",\"in\",[\"Open\",\"Working\"],false]]",
+ "function": "Count",
+ "idx": 0,
+ "is_public": 1,
+ "is_standard": 1,
+ "label": "Active Tasks",
+ "modified": "2025-11-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Active Tasks",
+ "owner": "Administrator",
+ "show_percentage_stats": 1,
+ "stats_time_interval": "Monthly",
+ "type": "Document Type"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

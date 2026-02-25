@@ -6,3 +6,5 @@
 # Patches added in this section will be executed after doctypes are migrated
 milestoneksa.patches.post_model_sync.add_project_task_tab
 milestoneksa.patches.post_model_sync.backfill_par_workflow_log
+milestoneksa.patches.post_model_sync.recalculate_project_journal_entry_cost
+milestoneksa.patches.post_model_sync.add_financial_summary_to_project_field_order

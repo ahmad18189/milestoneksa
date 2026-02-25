@@ -24,6 +24,17 @@ const MKSA = {
     return r.message || {};
   },
 
+  async fetchSalaryHistory(employee, syncFromVersion = 0) {
+    const r = await frappe.call({
+      method: "milestoneksa.api.salary_ui.get_salary_alteration_history",
+      args: {
+        employee: employee,
+        sync_from_version: syncFromVersion ,
+      },
+    });
+    return r.message || {};
+  },
+
   // ---------------- UI helpers ----------------
   makeTable(title, rows, currency) {
     function tr(label, amount) {
@@ -222,6 +233,65 @@ const MKSA = {
     d.show();
   },
 
+  openHistoryDialog(history) {
+    const rows = (history && history.logs) || [];
+    const structure = history && history.structure;
+    const defaultCurrency = (history && history.currency) || undefined;
+
+    const header = structure
+      ? '<div class="text-muted mb-2">' + __("Structure") + ": " + frappe.utils.escape_html(structure) + "</div>"
+      : "";
+
+    const tableBody = rows.length
+      ? rows.map(row => {
+          const whenText = row.altered_at ? frappe.datetime.str_to_user(row.altered_at) : "-";
+          const byText = row.altered_by || "-";
+          const component = row.salary_component || "-";
+          const rowCurrency = row.currency || defaultCurrency;
+          const oldValue = format_currency(row.old_value || 0, rowCurrency);
+          const newValue = format_currency(row.new_value || 0, rowCurrency);
+
+          return (
+            "<tr>" +
+              "<td>" + frappe.utils.escape_html(whenText) + "</td>" +
+              "<td>" + frappe.utils.escape_html(byText) + "</td>" +
+              "<td>" + frappe.utils.escape_html(component) + "</td>" +
+              '<td class="text-right">' + oldValue + "</td>" +
+              '<td class="text-right">' + newValue + "</td>" +
+            "</tr>"
+          );
+        }).join("")
+      : '<tr><td colspan="5" class="text-muted">' + __("No alterations recorded.") + "</td></tr>";
+
+    const html =
+      header +
+      '<div style="max-height: 420px; overflow: auto;">' +
+        '<table class="table table-bordered table-sm">' +
+          "<thead>" +
+            "<tr>" +
+              "<th>" + __("Date/Time") + "</th>" +
+              "<th>" + __("User") + "</th>" +
+              "<th>" + __("Component") + "</th>" +
+              '<th class="text-right">' + __("Old Value") + "</th>" +
+              '<th class="text-right">' + __("New Value") + "</th>" +
+            "</tr>" +
+          "</thead>" +
+          "<tbody>" + tableBody + "</tbody>" +
+        "</table>" +
+      "</div>";
+
+    const d = new frappe.ui.Dialog({
+      title: __("Salary History"),
+      size: "large",
+      fields: [{ fieldtype: "HTML", fieldname: "history_html" }],
+      primary_action_label: __("Close"),
+      primary_action: () => d.hide(),
+    });
+
+    d.fields_dict.history_html.$wrapper.html(html);
+    d.show();
+  },
+
   // ---------------- Additional Salary quick-create ----------------
   routeToAdditionalSalary(frm) {
   if (!frm.doc || !frm.doc.name) {
@@ -310,6 +380,24 @@ frappe.ui.form.on("Employee", {
     MKSA.routeToAdditionalSalary(frm);
   },
 
+  // 📜 Salary History (HR Manager/User only)
+  async mksa_salary_history(frm) {
+    const canHR = frappe.user.has_role("HR Manager") || frappe.user.has_role("HR User");
+    if (!canHR) {
+      frappe.msgprint(__("Not permitted"));
+      return;
+    }
+    if (!frm.doc.name) return;
+
+    try {
+      // Only fetch from Salary Structure's mksa_alteration_log table; do not sync from Version
+    const history = await MKSA.fetchSalaryHistory(frm.doc.name, 0);
+      MKSA.openHistoryDialog(history || {});
+    } catch (e) {
+      frappe.msgprint(__("Failed to load salary history."));
+    }
+  },
+
   // Do NOT auto-fetch; just manage visibility + placeholder
   refresh(frm) {
     const canHR = frappe.user.has_role("HR Manager") || frappe.user.has_role("HR User");
@@ -323,6 +411,9 @@ frappe.ui.form.on("Employee", {
     }
     if (frm.fields_dict.mksa_new_additional_salary) {
       frm.toggle_display("mksa_new_additional_salary", canHR);
+    }
+    if (frm.fields_dict.mksa_salary_history) {
+      frm.toggle_display("mksa_salary_history", canHR);
     }
 
     // Optional: placeholder until user clicks Fetch

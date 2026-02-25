@@ -1,0 +1,87 @@
+{
+ "actions": [],
+ "creation": "2026-02-16 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "salary_component",
+  "old_value",
+  "new_value",
+  "column_break_1",
+  "currency",
+  "altered_at",
+  "altered_by"
+ ],
+ "fields": [
+  {
+   "allow_on_submit": 1,
+   "fieldname": "salary_component",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Salary Component",
+   "options": "Salary Component",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "old_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Old Value",
+   "options": "currency"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "new_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "New Value",
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "altered_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Altered At",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "altered_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Altered By",
+   "options": "User",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-02-16 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Salary Structure Alteration Log",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

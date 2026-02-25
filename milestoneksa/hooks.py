@@ -38,7 +38,7 @@ page_css = {
 
 doctype_js = {
 	"Employee": ["public/js/employee_assets.js","public/js/employee_salary_ui.js","public/js/employee_custody_ui.js"],
-	"Project": ["public/js/project_task_tab.js", "public/js/project_dashboard_tab.js", "public/js/project_building_info.js"],
+	"Project": ["public/js/project_task_tab.js", "public/js/project_dashboard_tab.js", "public/js/project_financial_summary_tab.js", "public/js/project_building_info.js"],
 	"Project Proposal": ["public/js/project_proposal_dashboard.js", "public/js/project_building_info.js"]
 }
 
@@ -51,7 +51,16 @@ doc_events = {
 	},
  	"Salary Structure": {
 		"on_submit": "milestoneksa.events.payroll.payroll.create_ssa_on_submit",
-	}
+	},
+	"GL Entry": {
+		"after_insert": "milestoneksa.milestoneksa.project.on_gl_entry_change",
+		"on_update": "milestoneksa.milestoneksa.project.on_gl_entry_change",
+		"on_trash": "milestoneksa.milestoneksa.project.on_gl_entry_change",
+	},
+	"Purchase Invoice": {
+		"on_submit": "milestoneksa.milestoneksa.project.recalculate_project_purchase_cost_on_pi_change",
+		"on_cancel": "milestoneksa.milestoneksa.project.recalculate_project_purchase_cost_on_pi_change",
+	},
 }
 boot_session = "milestoneksa.boot.boot_session"
 
@@ -184,9 +193,9 @@ override_email_send = "milestoneksa.email_api.send_email_via_api"
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+	"Project": "milestoneksa.milestoneksa.project.Project"
+}
 
 # Document Events
 # ---------------

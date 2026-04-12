@@ -7,11 +7,18 @@ app_license = "mit"
 website_include_css = "/assets/milestoneksa/css/login.css"
 
 fixtures = [
-    {"doctype": "Custom Field"},
-    {"doctype": "Client Script"},
-    {"doctype": "Server Script"},
-    # Warning: Translation without filters can be VERY large.
-    {"doctype": "Translation"},
+    {
+        "dt": "Custom Field",
+        "filters": [["module", "=", "Milestoneksa"]],
+    },
+    {
+        "dt": "Client Script",
+        "filters": [["module", "=", "Milestoneksa"]],
+    },
+    {
+        "dt": "Server Script",
+        "filters": [["module", "=", "Milestoneksa"]],
+    },
 ]
 
 app_include_css = [

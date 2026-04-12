@@ -10,6 +10,7 @@
 			const it = items.shift();
 			if (!it) return;
 
+			const isPaymentApproval = (it.title || "").indexOf("Payment Approval Required") === 0;
 			const d = new frappe.ui.Dialog({
 				title: it.title || __("Announcement"),
 				fields: [
@@ -45,11 +46,24 @@
 			});
 
 			// Render rich text body
-			d.get_field("msg_html").$wrapper.html(`<div class="ql-editor">${it.message || ""}</div>`);
+			let message = it.message || "";
+			if (isPaymentApproval) {
+				// Strip legacy currency img tag (raw or escaped) so amount shows as number only
+				message = message.replace(/<img[^>]*Riyal_Symbol\.svg[^>]*>/gi, " ");
+				message = message.replace(/&lt;img[^&]*?Riyal_Symbol\.svg[^&]*?&gt;/gi, " ");
+			}
+			d.get_field("msg_html").$wrapper.html(`<div class="ql-editor">${message}</div>`);
 
 			// If policy is "Once", don't show the 'do not show again' checkbox
 			if (it.show_policy === "Once") {
 				d.get_field("dont_show").$wrapper.hide();
+			}
+
+			// Add class for Payment Approval announcements (styling in announcement_popup.css)
+			if (isPaymentApproval && d.$wrapper) {
+				d.$wrapper.addClass("desk-announcement--payment-approval");
+				// Remove "View & Take Action" block from DOM so it never shows (link is on "Open Link" only)
+				d.$wrapper.find(".par-announcement__actions").remove();
 			}
 
 			d.show();

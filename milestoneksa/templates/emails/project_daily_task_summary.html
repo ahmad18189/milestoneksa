@@ -1,0 +1,62 @@
+<h3>{{ labels.title }}</h3>
+{% if no_updates %}
+<p>{{ labels.no_tasks_message }}</p>
+{% elif projects %}
+{# Multi-project: one section per project (scheduler) #}
+{% for proj in projects %}
+<h4 style="margin-top: 1.2em;">{{ labels.get('project', 'Project') }}: <a href="{{ proj.project_link }}">{{ proj.project_display }}</a></h4>
+<p><a href="{{ proj.project_link }}">{{ labels.project_link_label }}</a></p>
+{% if proj.tasks %}
+<table class="table table-bordered" style="border-collapse: collapse; width: 100%; margin-top: 0.5em;">
+	<thead>
+		<tr style="background: #f5f5f5;">
+			<th style="padding: 8px; border: 1px solid #ddd;">{{ labels.task }}</th>
+			<th style="padding: 8px; border: 1px solid #ddd;">{{ labels.subject }}</th>
+			<th style="padding: 8px; border: 1px solid #ddd;">{{ labels.status }}</th>
+			<th style="padding: 8px; border: 1px solid #ddd;">{{ labels.description }}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for t in proj.tasks %}
+		<tr>
+			<td style="padding: 8px; border: 1px solid #ddd;"><a href="{{ t.link }}">{{ t.name }}</a></td>
+			<td style="padding: 8px; border: 1px solid #ddd;">{{ t.subject }}</td>
+			<td style="padding: 8px; border: 1px solid #ddd;">{{ t.status }}</td>
+			<td style="padding: 8px; border: 1px solid #ddd;">{{ t.description }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<p>{{ labels.no_tasks_message }}</p>
+{% endif %}
+{% endfor %}
+{% else %}
+{# Single-project (button): project_name, project_link, tasks #}
+<p>{{ labels.get('project', 'Project') }}: <a href="{{ project_link }}">{{ project_name }}</a></p>
+<p><a href="{{ project_link }}">{{ labels.project_link_label }}</a></p>
+{% if tasks %}
+<table class="table table-bordered" style="border-collapse: collapse; width: 100%; margin-top: 1em;">
+	<thead>
+		<tr style="background: #f5f5f5;">
+			<th style="padding: 8px; border: 1px solid #ddd;">{{ labels.task }}</th>
+			<th style="padding: 8px; border: 1px solid #ddd;">{{ labels.subject }}</th>
+			<th style="padding: 8px; border: 1px solid #ddd;">{{ labels.status }}</th>
+			<th style="padding: 8px; border: 1px solid #ddd;">{{ labels.description }}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for t in tasks %}
+		<tr>
+			<td style="padding: 8px; border: 1px solid #ddd;"><a href="{{ t.link }}">{{ t.name }}</a></td>
+			<td style="padding: 8px; border: 1px solid #ddd;">{{ t.subject }}</td>
+			<td style="padding: 8px; border: 1px solid #ddd;">{{ t.status }}</td>
+			<td style="padding: 8px; border: 1px solid #ddd;">{{ t.description }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<p>{{ labels.no_tasks_message }}</p>
+{% endif %}
+{% endif %}

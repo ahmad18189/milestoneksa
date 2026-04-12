@@ -111,18 +111,34 @@ frappe.ui.form.on('Purchase Order', {
           // Clear existing schedule rows
           frm.clear_table('payment_schedule');
 
-          // Sequential monthly schedule based on posting date
+          // VAT-inclusive total (grand_total / rounded_total includes tax)
+          const target_total = flt(frm.doc.rounded_total || frm.doc.grand_total, 2);
+          const total_net = frm.doc.items.reduce(
+            (sum, item) => sum + flt(item.net_amount != null ? item.net_amount : item.amount != null ? item.amount : flt(item.qty) * flt(item.rate)),
+            0
+          );
+
+          // Sequential monthly schedule: each row gets this item's share of the VAT-inclusive total
           let current = frm.doc.posting_date || frm.doc.transaction_date;
-          frm.doc.items.forEach(item => {
+          let allocated = 0;
+          const n = frm.doc.items.length;
+          frm.doc.items.forEach((item, idx) => {
             const row = frm.add_child('payment_schedule');
-            // Start date for this task
             row.start_date = current;
-            // Calculate due_date one month after start_date
             const nextDue = frappe.datetime.add_months(current, 1);
             row.due_date = nextDue;
-            row.payment_amount = flt(item.qty) * flt(item.rate);
+            const item_net = flt(item.net_amount != null ? item.net_amount : item.amount != null ? item.amount : flt(item.qty) * flt(item.rate));
+            // Value includes VAT: item's proportion of grand_total (tax-inclusive)
+            if (total_net > 0 && target_total > 0) {
+              row.payment_amount = idx === n - 1
+                ? flt(target_total - allocated, 2)
+                : flt(item_net / total_net * target_total, 2);
+              allocated += flt(row.payment_amount, 2);
+            } else {
+              row.payment_amount = flt(item_net, 2);
+              allocated += flt(row.payment_amount, 2);
+            }
             row.description = `${item.item_code} – ${item.description || item.item_name}`;
-            // Next task starts when this one ends
             current = nextDue;
           });
 

@@ -17,7 +17,8 @@ fixtures = [
 app_include_css = [
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.css",
     "/assets/milestoneksa/css/quick_checkin.css",
-    "/assets/milestoneksa/css/font.css"
+    "/assets/milestoneksa/css/font.css",
+    "/assets/milestoneksa/css/announcement_popup.css",
 ]
 
 app_include_js = [
@@ -44,7 +45,8 @@ doctype_js = {
 
 doc_events = {
 	"Purchase Order": {
-		"on_submit": "milestoneksa.milestoneksa.purchase_order.create_payment_tasks"
+#		"before_validate": "milestoneksa.milestoneksa.purchase_order.normalize_payment_schedule_to_grand_total",
+#		"on_submit": "milestoneksa.milestoneksa.purchase_order.create_payment_tasks"
 	},
 	"Employee": {
 		"validate": "milestoneksa.api.employee.validate_employee",
@@ -62,6 +64,14 @@ doc_events = {
 		"on_cancel": "milestoneksa.milestoneksa.project.recalculate_project_purchase_cost_on_pi_change",
 	},
 }
+
+scheduler_events = {
+	"cron": {
+		# Daily task summary: 4 PM (server time), Sun–Thu only (exclude Fri & Sat)
+		"0 16 * * 0-4": ["milestoneksa.tasks.daily_task_summary.send_daily_project_task_summary"],
+	},
+}
+
 boot_session = "milestoneksa.boot.boot_session"
 
 # Email

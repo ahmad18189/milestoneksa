@@ -29,6 +29,21 @@ frappe.ui.form.on("Project", {
 					indicator: "green"
 				});
 			});
+			frm.add_custom_button(__("Send Daily Task Summary"), () => {
+				frappe.call({
+					method: "milestoneksa.tasks.daily_task_summary.send_daily_task_summary_for_project",
+					args: { project: frm.doc.name },
+					callback(r) {
+						if (r && r.message) {
+							const msg = r.message.message || __("Daily task summary sent.");
+							frappe.show_alert({ message: msg, indicator: "green" });
+						}
+					},
+					error(err) {
+						frappe.msgprint({ title: __("Error"), message: err.message || err.exc, indicator: "red" });
+					},
+				});
+			});
 		}
 		
 		frm.events.render_project_task_tab(frm);

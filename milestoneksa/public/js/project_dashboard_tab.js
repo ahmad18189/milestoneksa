@@ -436,11 +436,6 @@ frappe.ui.form.on("Project", {
 		
 		const kpiGrid = $("<div class='dashboard-kpi-grid'></div>");
 		
-		// Project Health Score Card (NEW!)
-		const health = data.health || {};
-		const healthCard = frm.events.create_health_card(health);
-		kpiGrid.append(healthCard);
-		
 		// Financial Card
 		const financial = data.financial || {};
 		const finCard = frm.events.create_kpi_card(
@@ -493,17 +488,6 @@ frappe.ui.form.on("Project", {
 			tasks.overdue ? `${tasks.overdue} ${__("overdue")}` : __("None overdue")
 		);
 		kpiGrid.append(taskCard);
-		
-		// Team Card
-		const team = data.team || {};
-		const teamCard = frm.events.create_kpi_card(
-			"👥 " + __("Team"),
-			`${team.total_hours || 0} ${__("hrs")}`,
-			`${team.team_size || 0} ${__("members")}`,
-			team.team_size > 0 ? "good" : "warning",
-			team.total_hours && team.team_size ? `${(team.total_hours / team.team_size).toFixed(1)} ${__("hrs/person")}` : __("No team assigned")
-		);
-		kpiGrid.append(teamCard);
 		
 		return kpiGrid;
 	},
@@ -600,82 +584,7 @@ frappe.ui.form.on("Project", {
 		const priorityChart = frm.events.create_priority_chart(data.tasks);
 		chartsGrid.append(priorityChart);
 		
-		// Team Breakdown Chart (NEW!)
-		const teamChart = frm.events.create_team_chart(data.team);
-		chartsGrid.append(teamChart);
-		
 		return chartsGrid;
-	},
-	
-	create_team_chart(team) {
-		console.log("🔍 Dashboard: Creating team chart", team);
-		
-		const card = $(`
-			<div class="chart-card">
-				<div class="chart-card-title">👥 ${__("Team Hours Breakdown")}</div>
-				<div class="chart-container" style="height: 250px;"></div>
-			</div>
-		`);
-		
-		const breakdown = team.user_breakdown || [];
-		
-		if (breakdown.length === 0) {
-			card.find(".chart-container").html(`
-				<div class="text-center text-muted pt-5">
-					<p>${__("No timesheet data available")}</p>
-					<small>${__("Assign team members and log timesheets to see breakdown")}</small>
-				</div>
-			`);
-			return card;
-		}
-		
-		setTimeout(() => {
-			const canvas = $("<canvas></canvas>");
-			card.find(".chart-container").append(canvas);
-			
-			// Sort and take top 10
-			const topUsers = breakdown.slice(0, 10);
-			const labels = topUsers.map(u => u.user.split('@')[0]);  // Get username before @
-			const values = topUsers.map(u => u.hours);
-			
-			try {
-				new Chart(canvas[0], {
-					type: 'horizontalBar',
-					data: {
-						labels: labels,
-						datasets: [{
-							label: __('Hours'),
-							data: values,
-							backgroundColor: '#4e73df',
-							borderWidth: 0
-						}]
-					},
-					options: {
-						responsive: true,
-						maintainAspectRatio: false,
-						indexAxis: 'y',
-						plugins: {
-							legend: { display: false },
-							tooltip: {
-								callbacks: {
-									label: function(context) {
-										return `${context.parsed.x.toFixed(1)} hours`;
-									}
-								}
-							}
-						},
-						scales: {
-							x: { beginAtZero: true }
-						}
-					}
-				});
-				console.log("✅ Team Chart: Rendered with", topUsers.length, "members");
-			} catch (err) {
-				console.error("❌ Team Chart: Error", err);
-			}
-		}, 100);
-		
-		return card;
 	},
 	
 	create_profit_chart(financial) {
@@ -823,14 +732,15 @@ frappe.ui.form.on("Project", {
 		console.log("🔍 Dashboard: Financial breakdown data", breakdown);
 		
 		const chartData = {
-			labels: [__("Timesheet"), __("Purchases"), __("Expenses")],
+			labels: [__("Timesheet"), __("Purchases"), __("Expenses"), __("Journal Entry")],
 			datasets: [{
 				data: [
 					breakdown.timesheet_cost || 0,
 					breakdown.purchase_cost || 0,
-					breakdown.expense_claims || 0
+					breakdown.expense_claims || 0,
+					breakdown.journal_entry || 0
 				],
-				backgroundColor: ['#667eea', '#764ba2', '#f093fb']
+				backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#17a2b8']
 			}]
 		};
 		
@@ -860,7 +770,7 @@ frappe.ui.form.on("Project", {
 						labels: chartData.labels,
 						datasets: [{
 							data: chartData.datasets[0].data,
-							backgroundColor: ['#667eea', '#764ba2', '#f093fb'],
+							backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#17a2b8'],
 							borderWidth: 2,
 							borderColor: '#fff'
 						}]
@@ -1282,6 +1192,10 @@ frappe.ui.form.on("Project", {
 					<tr>
 						<td>Purchase Cost</td>
 						<td>${frappe.format(financial.breakdown?.purchase_cost || 0, {fieldtype: 'Currency'})}</td>
+					</tr>
+					<tr>
+						<td>${__("Journal Entry")}</td>
+						<td>${frappe.format(financial.breakdown?.journal_entry || 0, {fieldtype: 'Currency'})}</td>
 					</tr>
 					<tr>
 						<td>Total Revenue</td>

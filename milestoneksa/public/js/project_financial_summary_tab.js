@@ -71,9 +71,20 @@ frappe.ui.form.on("Project", {
 				const content = $("<div data-role='financial-summary-content'></div>");
 				content.append(frm.events.get_financial_summary_styles());
 				content.append(frm.events.render_payment_overview_section(frm, msg.payment_summary, msg.last_month_invoiced));
+				// Hidden for now: Gross Margin / Profit
+				// content.append(frm.events.render_gross_margin_section(frm, msg.gross_margin));
+				content.append(frm.events.render_budget_vs_actual_section(frm, msg.budget_vs_actual));
+				// Hidden for now: Billed vs Unbilled
+				// content.append(frm.events.render_billed_vs_unbilled_section(frm, msg.billed_vs_unbilled));
+				content.append(frm.events.render_outstanding_section(frm, msg.outstanding_po));
 				content.append(frm.events.render_supplier_payments_section(frm, msg.supplier_payments_unallocated_unreconciled || []));
 				content.append(frm.events.render_costs_section(frm, msg.costs));
 				content.append(frm.events.render_income_section(frm, msg.income));
+				content.append(frm.events.render_cost_breakdown_section(frm, msg.cost_breakdown));
+				content.append(frm.events.render_top_suppliers_section(frm, msg.top_suppliers));
+				// Hidden for now: Payment Status, Last Activity
+				// content.append(frm.events.render_payment_status_section(frm, msg.payment_status));
+				// content.append(frm.events.render_last_activity_section(frm, msg.last_activity));
 				content.append(frm.events.render_active_po_item_section(frm, msg.active_po_item_detail || msg.active_purchase_orders));
 				wrapper.append(content);
 			},
@@ -180,6 +191,7 @@ frappe.ui.form.on("Project", {
 				.project-financial-summary-wrapper .po-items-toggle:hover { text-decoration: underline; }
 				.project-financial-summary-wrapper .po-items-collapse { margin-left: 12px; }
 				.project-financial-summary-wrapper .po-items-collapse.collapse { display: none; }
+				.project-financial-summary-wrapper .cost-breakdown-bars .progress-bar { background-color: #667eea; }
 			</style>
 		`);
 	},
@@ -205,11 +217,202 @@ frappe.ui.form.on("Project", {
 				<div class="kpi-value">${fmt(payment_summary.total_remaining_po)}</div>
 			</div>
 			<div class="kpi-card">
-				<div class="kpi-label">${__("Project Total Cost")}</div>
+				<div class="kpi-label">${__("Project Total Cost (Purchase Orders total)")}</div>
 				<div class="kpi-value">${fmt(payment_summary.project_total_cost)}</div>
 			</div>
 		`);
 		section.append(kpi);
+		return section;
+	},
+
+	render_gross_margin_section(frm, data) {
+		if (!data) return $("<div></div>");
+		const fmt = (v) => frm.events.format_currency(v);
+		const section = $(`<div class="summary-section"><h5>${__("Gross Margin / Profit")}</h5></div>`);
+		const kpi = $(`<div class="payment-overview-kpi"></div>`);
+		kpi.append(`
+			<div class="kpi-card">
+				<div class="kpi-label">${__("Profit")}</div>
+				<div class="kpi-value">${fmt(data.profit)}</div>
+			</div>
+			<div class="kpi-card">
+				<div class="kpi-label">${__("Margin %")}</div>
+				<div class="kpi-value">${flt(data.margin_pct, 2)}%</div>
+			</div>
+		`);
+		section.append(kpi);
+		return section;
+	},
+
+	render_budget_vs_actual_section(frm, data) {
+		if (!data) return $("<div></div>");
+		const fmt = (v) => frm.events.format_currency(v);
+		const section = $(`<div class="summary-section"><h5>${__("Budget vs Actual")}</h5></div>`);
+		const rows = [
+			[__("Estimated (Budget)"), data.estimated],
+			[__("Actual Cost"), data.actual],
+			[__("Variance"), data.variance],
+		];
+		const table = frm.events.build_summary_table(frm, rows);
+		const p = $("<p class='mt-2 mb-0'>").text(__("Variance") + ": " + flt(data.variance_pct, 2) + "%" + (data.over_budget ? " (" + __("Over budget") + ")" : ""));
+		section.append($('<div class="table-responsive">').append(table)).append(p);
+		return section;
+	},
+
+	render_billed_vs_unbilled_section(frm, data) {
+		if (!data) return $("<div></div>");
+		const section = $(`<div class="summary-section"><h5>${__("Billed vs Unbilled")}</h5></div>`);
+		const rows = [
+			[__("Total Billed") + " (SI)", data.total_billed],
+			[__("Sales Order Total"), data.total_sales_amount],
+			[__("Unbilled"), data.unbilled],
+		];
+		section.append($('<div class="table-responsive">').append(frm.events.build_summary_table(frm, rows)));
+		return section;
+	},
+
+	render_invoiced_this_month_section(frm, value) {
+		const section = $(`<div class="summary-section"><h5>${__("Invoiced This Month")}</h5></div>`);
+		section.append($("<div class='kpi-card'>").append(
+			$("<div class='kpi-label'>").text(__("Purchase costs invoiced this month")),
+			$("<div class='kpi-value'>").text(frm.events.format_currency(value))
+		));
+		return section;
+	},
+
+	render_sales_order_total_section(frm, value) {
+		const section = $(`<div class="summary-section"><h5>${__("Sales Order Total")}</h5></div>`);
+		section.append($("<div class='kpi-card'>").append(
+			$("<div class='kpi-label'>").text(__("Total contract value (SO)")),
+			$("<div class='kpi-value'>").text(frm.events.format_currency(value))
+		));
+		return section;
+	},
+
+	render_outstanding_section(frm, data) {
+		if (!data) return $("<div></div>");
+		const fmt = (v) => frm.events.format_currency(v);
+		const section = $(`<div class="summary-section"><h5>${__("Outstanding (To Pay)")}</h5></div>`);
+		const escapeHtml = (s) => {
+			if (s == null || s === "") return "";
+			return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+		};
+		const poDetails = data.remaining_po_details || [];
+		const piDetails = data.remaining_pi_details || [];
+		let html = '<div class="table-responsive"><table class="summary-table"><thead><tr><th>' + __("Item") + '</th><th class="text-right">' + __("Amount") + '</th><th></th></tr></thead><tbody>';
+		html += '<tr class="outstanding-toggle-row" data-detail="po"><td>' + __("Total remaining (PO)") + '</td><td class="text-right">' + fmt(data.total_remaining) + '</td><td class="text-right"><span class="outstanding-toggle-icon">▼</span></td></tr>';
+		html += '<tr class="outstanding-detail-row outstanding-detail-po" style="display:none"><td colspan="3"></td></tr>';
+		html += '<tr class="outstanding-toggle-row" data-detail="pi"><td>' + __("Total remaining (PI)") + '</td><td class="text-right">' + fmt(data.total_remaining_pi != null ? data.total_remaining_pi : 0) + '</td><td class="text-right"><span class="outstanding-toggle-icon">▼</span></td></tr>';
+		html += '<tr class="outstanding-detail-row outstanding-detail-pi" style="display:none"><td colspan="3"></td></tr>';
+		html += "</tbody></table></div>";
+		const wrap = $('<div class="outstanding-section-wrap"></div>');
+		wrap.append($(html));
+		section.append(wrap);
+		// PO details table
+		if (poDetails.length) {
+			let tableHtml = '<div class="table-responsive"><table class="summary-table po-item-table"><thead><tr><th>' + __("Purchase Order") + '</th><th>' + __("Supplier") + '</th><th class="text-right">' + __("Remaining") + '</th></tr></thead><tbody>';
+			poDetails.forEach((r) => {
+				const link = frappe.utils.get_form_link("Purchase Order", r.po_name, true);
+				tableHtml += '<tr><td class="doc-link">' + link + '</td><td>' + escapeHtml(r.supplier) + '</td><td class="text-right">' + fmt(r.remaining) + '</td></tr>';
+			});
+			tableHtml += "</tbody></table></div>";
+			wrap.find(".outstanding-detail-po td[colspan='3']").html(tableHtml);
+		} else {
+			wrap.find(".outstanding-detail-po td[colspan='3']").text(__("No POs with remaining amount."));
+		}
+		// PI details table
+		if (piDetails.length) {
+			let tableHtml = '<div class="table-responsive"><table class="summary-table po-item-table"><thead><tr><th>' + __("Purchase Invoice") + '</th><th>' + __("Posting Date") + '</th><th>' + __("Supplier") + '</th><th class="text-right">' + __("Outstanding") + '</th></tr></thead><tbody>';
+			piDetails.forEach((r) => {
+				const link = frappe.utils.get_form_link("Purchase Invoice", r.name, true);
+				tableHtml += '<tr><td class="doc-link">' + link + '</td><td>' + (r.posting_date || "") + '</td><td>' + escapeHtml(r.supplier_name || r.supplier) + '</td><td class="text-right">' + fmt(r.outstanding_amount) + '</td></tr>';
+			});
+			tableHtml += "</tbody></table></div>";
+			wrap.find(".outstanding-detail-pi td[colspan='3']").html(tableHtml);
+		} else {
+			wrap.find(".outstanding-detail-pi td[colspan='3']").text(__("No PIs with outstanding amount."));
+		}
+		wrap.find(".outstanding-toggle-row").on("click", function() {
+			const row = $(this);
+			const detail = row.attr("data-detail");
+			const detailRow = wrap.find(".outstanding-detail-" + detail);
+			const icon = row.find(".outstanding-toggle-icon");
+			if (detailRow.is(":visible")) {
+				detailRow.hide();
+				icon.text("▼");
+			} else {
+				detailRow.show();
+				icon.text("▲");
+			}
+		});
+		return section;
+	},
+
+	render_cost_breakdown_section(frm, items) {
+		if (!items || !items.length) return $("<div></div>");
+		const fmt = (v) => frm.events.format_currency(v);
+		const total = items.reduce((s, i) => s + flt(i.value), 0);
+		const section = $(`<div class="summary-section"><h5>${__("Cost Breakdown")}</h5></div>`);
+		const div = $("<div class='cost-breakdown-bars'></div>");
+		items.forEach((i) => {
+			const pct = total ? (flt(i.value) / total * 100) : 0;
+			div.append(`
+				<div class="mb-2">
+					<div class="d-flex justify-content-between small">
+						<span>${i.label}</span>
+						<span>${fmt(i.value)} (${flt(pct, 1)}%)</span>
+					</div>
+					<div class="progress" style="height: 8px;">
+						<div class="progress-bar" role="progressbar" style="width: ${pct}%"></div>
+					</div>
+				</div>
+			`);
+		});
+		section.append(div);
+		return section;
+	},
+
+	render_top_suppliers_section(frm, list) {
+		if (!list || !list.length) return $("<div></div>");
+		const fmt = (v) => frm.events.format_currency(v);
+		const section = $(`<div class="summary-section"><h5>${__("Supplier Total Invoiced")}</h5></div>`);
+		let html = '<table class="summary-table"><thead><tr><th>' + __("Supplier") + '</th><th class="text-right">' + __("Total Invoiced") + '</th></tr></thead><tbody>';
+		let grandTotal = 0;
+		list.forEach((r) => {
+			grandTotal += flt(r.total, 2);
+			html += '<tr><td>' + (r.supplier_name || r.supplier || "") + '</td><td class="text-right">' + fmt(r.total) + '</td></tr>';
+		});
+		html += '<tr class="total-row"><td><strong>' + __("Grand Total") + '</strong></td><td class="text-right">' + fmt(grandTotal) + '</td></tr>';
+		html += "</tbody></table>";
+		section.append($('<div class="table-responsive">').append($(html)));
+		return section;
+	},
+
+	render_payment_status_section(frm, data) {
+		if (!data) return $("<div></div>");
+		const section = $(`<div class="summary-section"><h5>${__("Payment Status")}</h5></div>`);
+		const kpi = $(`<div class="payment-overview-kpi"></div>`);
+		kpi.append(`
+			<div class="kpi-card"><div class="kpi-label">${__("Paid")}</div><div class="kpi-value">${data.paid}</div></div>
+			<div class="kpi-card"><div class="kpi-label">${__("Partly Paid")}</div><div class="kpi-value">${data.partly_paid}</div></div>
+			<div class="kpi-card"><div class="kpi-label">${__("Unpaid")}</div><div class="kpi-value">${data.unpaid}</div></div>
+			<div class="kpi-card"><div class="kpi-label">${__("Total PIs")}</div><div class="kpi-value">${data.total}</div></div>
+		`);
+		section.append(kpi);
+		return section;
+	},
+
+	render_last_activity_section(frm, data) {
+		if (!data) return $("<div></div>");
+		const section = $(`<div class="summary-section"><h5>${__("Last Activity")}</h5></div>`);
+		const rows = [
+			[__("Last Purchase Invoice"), data.last_pi_date || __("—")],
+			[__("Last Payment Entry"), data.last_pe_date || __("—")],
+		];
+		let html = '<table class="summary-table"><thead><tr><th>' + __("Event") + '</th><th>' + __("Date") + '</th></tr></thead><tbody>';
+		rows.forEach((r) => { html += '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; });
+		html += "</tbody></table>";
+		section.append($('<div class="table-responsive">').append($(html)));
 		return section;
 	},
 
@@ -293,8 +496,10 @@ frappe.ui.form.on("Project", {
 				const safeId = "po-" + idx;
 				const paidId = "po-paid-" + safeId;
 				const remainId = "po-remain-" + safeId;
+				const invoicesId = "po-invoices-" + safeId;
 				const paidItems = (p.items || []).filter((it) => flt(it.billed_amt) > 0);
 				const remainItems = (p.items || []).filter((it) => flt(it.remaining_amt, 2) > 0);
+				const hasInvoices = (p.invoices && p.invoices.length);
 				const poBlock = $(`
 					<div class="mb-3 po-block">
 						<div class="table-responsive">
@@ -325,6 +530,12 @@ frappe.ui.form.on("Project", {
 						</div>
 						<div class="po-items-collapse collapse" id="${remainId}"></div>
 						` : ""}
+						${hasInvoices ? `
+						<div class="po-items-toggle" data-target="${invoicesId}" data-expanded="false">
+							<span class="toggle-icon">▼</span> ${__("Purchase Invoices")}
+						</div>
+						<div class="po-items-collapse collapse" id="${invoicesId}"></div>
+						` : ""}
 					</div>
 				`);
 				section.append(poBlock);
@@ -346,6 +557,15 @@ frappe.ui.form.on("Project", {
 					});
 					html += "</tbody></table></div>";
 					poBlock.find("[id='" + remainId + "']").append(html);
+				}
+				if (hasInvoices) {
+					let html = '<div class="table-responsive"><table class="summary-table po-item-table"><thead><tr><th>' + __("Purchase Invoice") + '</th><th>' + __("Posting Date") + '</th><th>' + __("Supplier") + '</th><th class="text-right">' + __("Grand Total") + '</th><th class="text-right">' + __("Paid") + '</th><th class="text-right">' + __("Remaining") + '</th></tr></thead><tbody>';
+					(p.invoices || []).forEach((inv) => {
+						const piLink = frappe.utils.get_form_link("Purchase Invoice", inv.name, true);
+						html += '<tr><td class="doc-link">' + piLink + '</td><td>' + (inv.posting_date || "") + '</td><td>' + escapeHtml(inv.supplier_name || inv.supplier || "") + '</td><td class="text-right">' + fmt(inv.grand_total) + '</td><td class="text-right">' + fmt(inv.paid_amount) + '</td><td class="text-right">' + fmt(inv.outstanding_amount) + '</td></tr>';
+					});
+					html += "</tbody></table></div>";
+					poBlock.find("[id='" + invoicesId + "']").append(html);
 				}
 				poBlock.find(".po-items-toggle").on("click", function() {
 					const $tog = $(this);

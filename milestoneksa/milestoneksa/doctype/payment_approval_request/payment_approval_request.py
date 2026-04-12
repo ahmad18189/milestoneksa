@@ -4,7 +4,8 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import get_url, now
+from frappe.utils import flt, get_url, now
+from frappe.utils.data import escape_html, fmt_money
 
 
 def get_transition_action_for_states(doctype: str, from_state: str, to_state: str) -> str:
@@ -168,73 +169,55 @@ class PaymentApprovalRequest(Document):
 			frappe.log_error(f"Error creating desk announcement: {str(e)}")
 	
 	def build_announcement_message(self, workflow_state):
-		"""Build detailed HTML message for the announcement"""
-		message = f"""
-		<div style="font-family: Arial, sans-serif;">
-			<h3>Payment Approval Request - Action Required</h3>
-			<p><strong>Status:</strong> {workflow_state}</p>
-			<hr>
-			<table style="width: 100%; border-collapse: collapse;">
-				<tr>
-					<td style="padding: 8px; font-weight: bold; width: 40%;">Request ID:</td>
-					<td style="padding: 8px;">{self.name}</td>
-				</tr>
-				<tr>
-					<td style="padding: 8px; font-weight: bold;">Employee:</td>
-					<td style="padding: 8px;">{self.employee_name or ''}</td>
-				</tr>
-				<tr>
-					<td style="padding: 8px; font-weight: bold;">Department:</td>
-					<td style="padding: 8px;">{self.department or ''}</td>
-				</tr>
-				<tr>
-					<td style="padding: 8px; font-weight: bold;">Application Date:</td>
-					<td style="padding: 8px;">{self.application_date or ''}</td>
-				</tr>
-				<tr>
-					<td style="padding: 8px; font-weight: bold;">Amount:</td>
-					<td style="padding: 8px;">{frappe.format_value(self.amount, {'fieldtype': 'Currency'}) if self.amount else 'N/A'}</td>
-				</tr>
-		"""
-		
-		if self.priority:
-			message += f"""
-				<tr>
-					<td style="padding: 8px; font-weight: bold;">Priority:</td>
-					<td style="padding: 8px;">{self.priority}</td>
-				</tr>
-			"""
-		
-		if self.project:
-			message += f"""
-				<tr>
-					<td style="padding: 8px; font-weight: bold;">Project:</td>
-					<td style="padding: 8px;">{self.project}</td>
-				</tr>
-			"""
-		
+		"""Build compact HTML message for the announcement. Link is on the announcement (Open Link), not in content.
+		Amount is plain text (no currency symbol image) so it renders correctly in the compact modal."""
+		if self.amount is not None and self.amount != "":
+			currency_code = frappe.defaults.get_global_default("currency") or "SAR"
+			amount_str = fmt_money(flt(self.amount), precision=2) + " " + currency_code
+		else:
+			amount_str = "N/A"
+		description_preview = ""
 		if self.description:
-			# Strip HTML tags if present, otherwise just use the text
-			description_text = frappe.utils.strip_html(self.description) if self.description else ""
-			description_preview = description_text[:200] + "..." if len(description_text) > 200 else description_text
-			message += f"""
-				<tr>
-					<td style="padding: 8px; font-weight: bold;">Description:</td>
-					<td style="padding: 8px;">{description_preview}</td>
-				</tr>
-			"""
-		
-		message += """
-			</table>
-			<hr>
-			<p style="margin-top: 15px;">
-				<a href="{link}" style="background-color: #2490ef; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
-					View & Take Action
-				</a>
-			</p>
+			description_text = frappe.utils.strip_html(self.description) or ""
+			description_preview = (description_text[:200] + "...") if len(description_text) > 200 else description_text
+
+		rows = [
+			("Request ID", self.name),
+			("Employee", self.employee_name or ""),
+			("Department", self.department or ""),
+			("Application Date", str(self.application_date) if self.application_date else ""),
+			("Amount", amount_str),
+		]
+		if self.priority:
+			rows.append(("Priority", self.priority))
+		if self.project:
+			rows.append(("Project", self.project))
+		if description_preview:
+			rows.append(("Description", description_preview))
+
+		row_html = "".join(
+			f"""
+			<tr>
+				<td class="par-announcement__label">{escape_html(str(label))}</td>
+				<td class="par-announcement__value">{escape_html(str(value))}</td>
+			</tr>"""
+			for label, value in rows
+		)
+
+		message = f"""
+		<div class="par-announcement">
+			<div class="par-announcement__header">
+				<span class="par-announcement__icon" aria-hidden="true">&#128197;</span>
+				<span class="par-announcement__badge par-announcement__badge--pending">{escape_html(workflow_state)}</span>
+			</div>
+			<p class="par-announcement__subtitle">Action required — please review and approve or reject.</p>
+			<div class="par-announcement__card">
+				<table class="par-announcement__table">
+					{row_html}
+				</table>
+			</div>
 		</div>
 		"""
-		
 		return message
 	
 	def unpublish_old_announcements(self):

@@ -751,6 +751,7 @@
 "Total Paid to Date","إجمالي المدفوع حتى التاريخ"
 "Total Remaining","إجمالي المتبقي"
 "Project Total Cost","إجمالي تكلفة المشروع"
+"Project Total Cost (Purchase Orders total)","إجمالي تكلفة المشروع (إجمالي أوامر الشراء)"
 "Invoiced Last Month","المفوتر في الشهر الماضي"
 "Invoiced in the Past Month","المفوتر في الشهر الماضي"
 "No invoices in the previous month.","لا توجد فواتير في الشهر السابق."
@@ -768,3 +769,61 @@
 "No supplier payments with empty references for this project.","لا توجد مدفوعات لموردين بمراجع فارغة لهذا المشروع."
 "Recalculate Costing","إعادة حساب التكاليف"
 "Costing recalculated.","تم إعادة حساب التكاليف."
+"Costing recalculated. Total Purchase Cost: {0}","تم إعادة حساب التكاليف. إجمالي تكلفة الشراء: {0}"
+"Save the project to view the Financial Summary.","احفظ المشروع لعرض الملخص المالي."
+"Failed to load financial summary.","فشل تحميل الملخص المالي."
+"Error loading financial summary","خطأ في تحميل الملخص المالي"
+"Supplier Total Invoiced","إجمالي المفوت للمورد"
+"Total Invoiced","إجمالي المفوت"
+"Outstanding (To Pay)","المستحق (للدفع)"
+"Total remaining (PO)","إجمالي المتبقي (أمر الشراء)"
+"Total remaining (PI)","إجمالي المتبقي (فاتورة الشراء)"
+"Purchase Order","أمر الشراء"
+"No POs with remaining amount.","لا توجد أوامر شراء بمبلغ متبقي."
+"Purchase Invoice","فاتورة الشراء"
+"Outstanding","المستحق"
+"No PIs with outstanding amount.","لا توجد فواتير شراء بمبلغ مستحق."
+"Budget vs Actual","الميزانية مقابل الفعلي"
+"Gross Margin / Profit","إجمالي الهامش / الربح"
+"Profit","الربح"
+"Margin %","نسبة الهامش %"
+"Estimated (Budget)","التقدير (الميزانية)"
+"Actual Cost","التكلفة الفعلية"
+"Variance","الانحراف"
+"Over budget","تجاوز الميزانية"
+"Billed vs Unbilled","المفوتر مقابل غير المفوت"
+"Total Billed","إجمالي المفوت"
+"Sales Order Total","إجمالي أمر البيع"
+"Unbilled","غير المفوت"
+"Invoiced This Month","المفوتر هذا الشهر"
+"Purchase costs invoiced this month","تكاليف الشراء المفوتة هذا الشهر"
+"Total contract value (SO)","إجمالي قيمة العقد (أمر البيع)"
+"Cost Breakdown","تفصيل التكاليف"
+"Payment Status","حالة الدفع"
+"Partly Paid","مدفوع جزئياً"
+"Unpaid","غير مدفوع"
+"Total PIs","إجمالي فواتير الشراء"
+"Last Activity","آخر نشاط"
+"Last Purchase Invoice","آخر فاتورة شراء"
+"Last Payment Entry","آخر قيد دفع"
+"Event","الحدث"
+"Date","التاريخ"
+"Journal Entry / GL","القيد اليدوي / دفتر الأستاذ"
+"Consumed Material","المواد المستهلكة"
+"Purchase Invoices","فواتير الشراء"
+"Supplier Payments (Unallocated)","مدفوعات الموردين (غير المخصصة)"
+"—","—"
+Daily Task Summary,ملخص المهام اليومي
+Project,المشروع
+Task,مهمة
+Status,الحالة
+Description,الوصف
+Subject,الموضوع
+No tasks created or modified in the last 24 hours.,لم يتم إنشاء أو تعديل أي مهام في آخر 24 ساعة.
+"No update on the current system information. Please contact the project managers.","لا يوجد تحديث على معلومات النظام الحالية. يرجى التواصل مع مدراء المشاريع."
+Open Project,فتح المشروع
+Daily task summary: {0},ملخص المهام اليومي: {0}
+Daily task summary sent to {0} recipient(s).,تم إرسال ملخص المهام اليومي إلى {0} مستلم/مستلمين.
+Invalid project.,مشروع غير صالح.
+No recipient roles configured in Projects Settings.,لم يتم تكوين أدوار المستلمين في إعدادات المشاريع.
+Project is required.,المشروع مطلوب.

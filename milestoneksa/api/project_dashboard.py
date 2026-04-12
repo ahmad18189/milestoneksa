@@ -158,11 +158,12 @@ def get_financial_metrics(project: str, project_doc):
     total_costing = flt(project_doc.total_costing_amount)
     total_purchase = flt(project_doc.total_purchase_cost)
     total_expense = flt(project_doc.get("total_expense_claim", 0))
+    total_jv = flt(project_doc.get("total_cost_from_journal_entry", 0))
     total_sales = flt(project_doc.total_sales_amount)
     total_billed = flt(project_doc.total_billed_amount)
     total_billable = flt(project_doc.total_billable_amount)
     
-    actual_cost = total_costing + total_purchase + total_expense
+    actual_cost = total_costing + total_purchase + total_expense + total_jv
     budget_variance = estimated_cost - actual_cost if estimated_cost else 0
     budget_variance_pct = (budget_variance / estimated_cost * 100) if estimated_cost else 0
     
@@ -202,6 +203,7 @@ def get_financial_metrics(project: str, project_doc):
             "timesheet_cost": total_costing,
             "purchase_cost": total_purchase,
             "expense_claims": total_expense,
+            "journal_entry": total_jv,
         }
     }
 

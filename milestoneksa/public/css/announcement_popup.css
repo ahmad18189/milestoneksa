@@ -1,0 +1,131 @@
+/* Desk Announcement modal – Payment Approval Request (compact) */
+
+.modal.desk-announcement--payment-approval .modal-dialog {
+	max-width: 480px;
+}
+
+.modal.desk-announcement--payment-approval .modal-content {
+	border-radius: 12px;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+	border: none;
+	overflow: hidden;
+}
+
+.modal.desk-announcement--payment-approval .modal-header {
+	border-bottom: none;
+	padding-bottom: 0;
+}
+
+.modal.desk-announcement--payment-approval .modal-body {
+	padding: 0 16px 16px;
+}
+
+/* Fit content: no extra margin or padding on wrapper */
+.modal.desk-announcement--payment-approval .modal-body .frappe-control {
+	margin: 0;
+	padding: 0;
+}
+
+.modal.desk-announcement--payment-approval .ql-editor {
+	margin: 0 !important;
+	padding: 0 !important;
+	min-height: 0 !important;
+	border: none !important;
+}
+
+/* Compact announcement content – link is on the announcement (Open Link), not in body */
+.modal.desk-announcement--payment-approval .par-announcement {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	font-size: 12px;
+	line-height: 1.4;
+	color: #2c3e50;
+	margin: 0;
+	padding: 0;
+}
+
+.par-announcement__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 4px;
+}
+
+.par-announcement__icon {
+	font-size: 1.1rem;
+	line-height: 1;
+	opacity: 0.85;
+}
+
+.par-announcement__badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 11px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.par-announcement__badge--pending {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.par-announcement__subtitle {
+	margin: 0 0 10px;
+	font-size: 11px;
+	color: #6b7280;
+}
+
+.par-announcement__card {
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	padding: 10px 12px;
+	margin-bottom: 0;
+}
+
+.par-announcement__table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 12px;
+}
+
+.par-announcement__table tr {
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.par-announcement__table tr:last-child {
+	border-bottom: none;
+}
+
+.par-announcement__label {
+	padding: 4px 8px 4px 0;
+	font-weight: 600;
+	color: #475569;
+	width: 38%;
+	vertical-align: top;
+	font-size: 11px;
+}
+
+.par-announcement__value {
+	padding: 4px 0;
+	color: #1e293b;
+	font-size: 12px;
+}
+
+/* Legacy amount with currency img: hide the img so only the number shows (new announcements use plain text e.g. "3,123.00 SAR") */
+.par-announcement__value img {
+	display: none !important;
+}
+
+/* Remove legacy in-content CTA; link is on the announcement (Open Link) only */
+.modal.desk-announcement--payment-approval .par-announcement__actions,
+.par-announcement__actions {
+	display: none !important;
+	visibility: hidden !important;
+	height: 0 !important;
+	overflow: hidden !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}

@@ -42,5 +42,71 @@
   "name": "payroll print",
   "script": "frappe.ui.form.on('Payroll Entry', {\n  refresh(frm) {\n    // Only show on Submitted (change to !== 0 if you also want Draft)\n    if (frm.doc.docstatus !== 1) return;\n\n    // --- Helper: POST to an endpoint and open in a new tab (with CSRF) ---\n    const open_post = (url, params = {}) => {\n      const form = document.createElement('form');\n      form.method = 'POST';\n      form.action = url;\n      form.target = '_blank';\n\n      // include CSRF token so Frappe accepts the POST\n      const fields = { csrf_token: frappe.csrf_token, ...params };\n      Object.entries(fields).forEach(([k, v]) => {\n        const input = document.createElement('input');\n        input.type = 'hidden';\n        input.name = k;\n        input.value = typeof v === 'string' ? v : JSON.stringify(v);\n        form.appendChild(input);\n      });\n\n      document.body.appendChild(form);\n      form.submit();\n      form.remove();\n    };\n\n    const group = __('Cairo PDF');\n\n    // Build employee list once\n    const employees = (frm.doc.employees || []).map(r => r.employee).filter(Boolean);\n\n    // A) Custom report PDF (your HTML/CSS via milestoneksa.api.pdf.download_salary_report_pdf)\n    frm.add_custom_button(__('Salary Register (Cairo PDF)'), () => {\n      const filters = {\n        company: frm.doc.company,\n        from_date: frm.doc.start_date || frm.doc.from_date,\n        to_date: frm.doc.end_date || frm.doc.to_date,\n        payroll_frequency: frm.doc.payroll_frequency,\n        payroll_entry: frm.doc.name,\n        employee_list: employees, // server will post-filter rows if needed\n      };\n\n      open_post('/api/method/milestoneksa.api.pdf.download_salary_report_pdf', {\n        report_name: 'Salary Register', // change if you want another report\n        filters: JSON.stringify(filters),\n      });\n    }, group);\n\n    // B) Merge all Salary Slips for this Payroll Entry using your Cairo print format\n    frm.add_custom_button(__('All Salary Slips (Cairo Print)'), () => {\n      open_post('/api/method/frappe.utils.print_format.download_multi_pdf', {\n        doctype: 'Salary Slip',\n        filters: JSON.stringify([['payroll_entry', '=', frm.doc.name]]),\n        print_format: 'Salary Slip - Cairo',\n        no_letterhead: 0,\n        orientation: 'Portrait',\n      });\n    }, group);\n  },\n});\n",
   "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Property Units",
+  "enabled": 1,
+  "modified": "2025-04-15 09:01:25.737912",
+  "module": "Appartement",
+  "name": "Hide Property Unit Name",
+  "script": "frappe.listview_settings['Property Units'] = {\n    hide_name_column: true\n};",
+  "view": "List"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Area",
+  "enabled": 1,
+  "modified": "2025-04-15 09:04:36.919831",
+  "module": "Appartement",
+  "name": "Hide Area Name Field",
+  "script": "frappe.listview_settings['Area'] = {\n    hide_name_column: true\n};",
+  "view": "List"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Media Center",
+  "enabled": 1,
+  "modified": "2025-04-15 09:05:58.856087",
+  "module": "Appartement",
+  "name": "Hide Media Center Name Field",
+  "script": "frappe.listview_settings['Media Center'] = {\n    hide_name_column: true\n};",
+  "view": "List"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Contact Us",
+  "enabled": 1,
+  "modified": "2025-04-15 09:07:13.385128",
+  "module": "Appartement",
+  "name": "Hide Contact Us Name Field",
+  "script": "frappe.listview_settings['Contact Us'] = {\n    hide_name_column: true\n};",
+  "view": "List"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Questions",
+  "enabled": 1,
+  "modified": "2025-04-15 09:08:08.478204",
+  "module": "Appartement",
+  "name": "Hide Question Name Field",
+  "script": "frappe.listview_settings['Questions'] = {\n    hide_name_column: true\n};",
+  "view": "List"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Real Estate Project",
+  "enabled": 1,
+  "modified": "2025-05-07 07:49:45.727205",
+  "module": "Appartement",
+  "name": "Hide Real Estate Project Name Field",
+  "script": "frappe.listview_settings['Real Estate Project'] = {\n    hide_name_column: true\n};",
+  "view": "List"
  }
 ]

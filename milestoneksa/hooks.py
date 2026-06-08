@@ -5,6 +5,12 @@ app_description = "milestoneksa customizations"
 app_email = "ahmed@milestoneksa.com"
 app_license = "mit"
 website_include_css = "/assets/milestoneksa/css/login.css"
+website_path_resolver = "milestoneksa.crm_route.resolve_path"
+
+website_route_rules = [
+	{"from_route": "/crm", "to_route": "milestone-crm"},
+	{"from_route": "/crm/<path:app_path>", "to_route": "milestone-crm"},
+]
 
 fixtures = [
     {
@@ -46,6 +52,7 @@ page_css = {
 
 doctype_js = {
 	"Employee": ["public/js/employee_assets.js","public/js/employee_salary_ui.js","public/js/employee_custody_ui.js"],
+	"HR Settings": ["public/js/hr_settings_attendance_emails.js"],
 	"Project": ["public/js/project_task_tab.js", "public/js/project_dashboard_tab.js", "public/js/project_financial_summary_tab.js", "public/js/project_building_info.js"],
 	"Project Proposal": ["public/js/project_proposal_dashboard.js", "public/js/project_building_info.js"]
 }
@@ -70,12 +77,23 @@ doc_events = {
 		"on_submit": "milestoneksa.milestoneksa.project.recalculate_project_purchase_cost_on_pi_change",
 		"on_cancel": "milestoneksa.milestoneksa.project.recalculate_project_purchase_cost_on_pi_change",
 	},
+	"WhatsApp Message": {
+		"before_validate": "milestoneksa.chatbot.whatsapp_bot.link_whatsapp_message_to_crm",
+		"after_insert": "milestoneksa.chatbot.whatsapp_bot.handle_whatsapp_message",
+	},
+	"WhatsApp Templates": {
+		"before_validate": "milestoneksa.chatbot.whatsapp_bot.validate_chatbot_whatsapp_template",
+	},
 }
 
 scheduler_events = {
 	"cron": {
 		# Daily task summary: 4 PM (server time), Sun–Thu only (exclude Fri & Sat)
 		"0 16 * * 0-4": ["milestoneksa.tasks.daily_task_summary.send_daily_project_task_summary"],
+		# Attendance check-in/check-out emails: every 5 min Sun–Thu; times from HR Settings
+		"*/5 * * * 0-4": [
+			"milestoneksa.tasks.attendance_email_reports.run_due_attendance_email_reports"
+		],
 	},
 }
 
@@ -258,6 +276,10 @@ override_doctype_class = {
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "milestoneksa.event.get_events"
 # }
+override_whitelisted_methods = {
+	"crm.api.whatsapp.is_whatsapp_enabled": "milestoneksa.chatbot.whatsapp_bot.crm_is_whatsapp_enabled",
+	"crm.api.whatsapp.is_whatsapp_installed": "milestoneksa.chatbot.whatsapp_bot.crm_is_whatsapp_installed",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

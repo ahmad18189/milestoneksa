@@ -24,12 +24,177 @@ frappe.ui.form.on("Project", {
 						frappe.msgprint({ title: __("Error"), message: err.message || err.exc, indicator: "red" });
 					},
 				});
-			}, __("Actions"));
+			}, __("Financial Summary"));
+			frm.add_custom_button(__("Purchased Items Cost"), () => {
+				frm.events.show_purchased_items_cost_dialog(frm);
+			}, __("Financial Summary"));
 		}
 		frm.events.render_financial_summary(frm);
 	},
 	after_save(frm) {
 		frm.events.render_financial_summary(frm);
+	},
+
+	show_purchased_items_cost_dialog(frm) {
+		const dialog = new frappe.ui.Dialog({
+			title: __("Purchased Items Cost"),
+			size: "extra-large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "content",
+					options: `
+						<div class="text-center p-4">
+							<div class="spinner-border text-primary"></div>
+							<div class="mt-2">${__("Loading purchased items cost...")}</div>
+						</div>
+					`,
+				},
+			],
+		});
+		dialog.show();
+
+		frappe.call({
+			method: "milestoneksa.api.project_financial_summary.get_project_purchased_items_cost",
+			args: { project: frm.doc.name },
+			callback(r) {
+				const data = r && r.message ? r.message : {};
+				dialog.fields_dict.content.$wrapper.html(
+					frm.events.render_purchased_items_cost_dialog(frm, data)
+				);
+			},
+			error(err) {
+				dialog.fields_dict.content.$wrapper.html(`
+					<div class="alert alert-danger">
+						${__("Failed to load purchased items cost.")}
+						<br><small>${err.message || err.exc || ""}</small>
+					</div>
+				`);
+			},
+		});
+	},
+
+	render_purchased_items_cost_dialog(frm, data) {
+		const fmt = (v) => frm.events.format_currency(v);
+		const escapeHtml = (s) => {
+			if (s == null || s === "") return "";
+			return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+		};
+		const itemSummary = data.item_summary || [];
+		const identifierActivitySummary = data.identifier_activity_summary || [];
+		const purchaseSummary = data.purchase_summary || [];
+		const details = data.details || [];
+		const totals = data.totals || {};
+
+		const buildEmpty = (message) => `<p class="text-muted mb-0">${escapeHtml(message)}</p>`;
+		const buildIdentifierActivitySummary = () => {
+			if (!identifierActivitySummary.length) return buildEmpty(__("No Project Identifier / Activity Type costs found for this project."));
+			let html = '<div class="table-responsive"><table class="summary-table purchased-items-table"><thead><tr><th>' + __("Project Identifier") + '</th><th>' + __("Activity Type") + '</th><th class="text-right">' + __("Qty") + '</th><th class="text-right">' + __("Net Amount") + '</th><th class="text-right">' + __("Total Cost (Incl. VAT)") + '</th></tr></thead><tbody>';
+			identifierActivitySummary.forEach((row) => {
+				html += '<tr><td>' + escapeHtml(row.project_identifier) + '</td><td>' + escapeHtml(row.activity_type) + '</td><td class="text-right">' + flt(row.qty, 2) + '</td><td class="text-right">' + fmt(row.net_amount) + '</td><td class="text-right">' + fmt(row.amount_with_vat) + '</td></tr>';
+			});
+			html += '<tr class="total-row"><td colspan="3"><strong>' + __("Grand Total") + '</strong></td><td class="text-right">' + fmt(totals.net_amount) + '</td><td class="text-right">' + fmt(totals.amount_with_vat) + '</td></tr>';
+			html += "</tbody></table></div>";
+			return html;
+		};
+		const buildItemSummary = () => {
+			if (!itemSummary.length) return buildEmpty(__("No purchased items found for this project."));
+			let html = '<div class="table-responsive"><table class="summary-table purchased-items-table"><thead><tr><th>' + __("Item") + '</th><th>' + __("Item Name") + '</th><th>' + __("Activity Type") + '</th><th>' + __("Project Identifier") + '</th><th class="text-right">' + __("Qty") + '</th><th>' + __("UOM") + '</th><th class="text-right">' + __("Net Amount") + '</th><th class="text-right">' + __("Total Cost (Incl. VAT)") + '</th></tr></thead><tbody>';
+			itemSummary.forEach((row) => {
+				html += '<tr><td>' + escapeHtml(row.item_code) + '</td><td>' + escapeHtml(row.item_name) + '</td><td>' + escapeHtml(row.activity_types) + '</td><td>' + escapeHtml(row.project_identifiers) + '</td><td class="text-right">' + flt(row.qty, 2) + '</td><td>' + escapeHtml(row.uom) + '</td><td class="text-right">' + fmt(row.net_amount) + '</td><td class="text-right">' + fmt(row.amount_with_vat) + '</td></tr>';
+			});
+			html += '<tr class="total-row"><td colspan="6"><strong>' + __("Grand Total") + '</strong></td><td class="text-right">' + fmt(totals.net_amount) + '</td><td class="text-right">' + fmt(totals.amount_with_vat) + '</td></tr>';
+			html += "</tbody></table></div>";
+			return html;
+		};
+		const buildPurchaseSummary = () => {
+			if (!purchaseSummary.length) return buildEmpty(__("No purchase invoices found for this project."));
+			let html = '<div class="table-responsive"><table class="summary-table purchased-items-table"><thead><tr><th>' + __("Purchase Invoice") + '</th><th>' + __("Posting Date") + '</th><th>' + __("Supplier") + '</th><th>' + __("Activity Type") + '</th><th>' + __("Project Identifier") + '</th><th>' + __("Purchase Order") + '</th><th class="text-right">' + __("Net Amount") + '</th><th class="text-right">' + __("Total Cost (Incl. VAT)") + '</th></tr></thead><tbody>';
+			purchaseSummary.forEach((row) => {
+				const piLink = frappe.utils.get_form_link("Purchase Invoice", row.purchase_invoice, true);
+				html += '<tr><td class="doc-link">' + piLink + '</td><td>' + (row.posting_date || "") + '</td><td>' + escapeHtml(row.supplier_name || row.supplier) + '</td><td>' + escapeHtml(row.activity_types) + '</td><td>' + escapeHtml(row.project_identifiers) + '</td><td>' + escapeHtml(row.purchase_orders) + '</td><td class="text-right">' + fmt(row.net_amount) + '</td><td class="text-right">' + fmt(row.amount_with_vat) + '</td></tr>';
+			});
+			html += '<tr class="total-row"><td colspan="6"><strong>' + __("Grand Total") + '</strong></td><td class="text-right">' + fmt(totals.net_amount) + '</td><td class="text-right">' + fmt(totals.amount_with_vat) + '</td></tr>';
+			html += "</tbody></table></div>";
+			return html;
+		};
+		const buildDetails = () => {
+			if (!details.length) return buildEmpty(__("No purchase invoice item details found for this project."));
+			let html = '<div class="table-responsive"><table class="summary-table purchased-items-table"><thead><tr><th>' + __("Purchase Invoice") + '</th><th>' + __("Purchase Order") + '</th><th>' + __("Supplier") + '</th><th>' + __("Activity Type") + '</th><th>' + __("Project Identifier") + '</th><th>' + __("Item") + '</th><th class="text-right">' + __("Qty") + '</th><th class="text-right">' + __("Net Amount") + '</th><th class="text-right">' + __("Total Cost (Incl. VAT)") + '</th></tr></thead><tbody>';
+			details.forEach((row) => {
+				const piLink = frappe.utils.get_form_link("Purchase Invoice", row.purchase_invoice, true);
+				const poLink = row.purchase_order ? frappe.utils.get_form_link("Purchase Order", row.purchase_order, true) : "";
+				html += '<tr><td class="doc-link">' + piLink + '</td><td class="doc-link">' + poLink + '</td><td>' + escapeHtml(row.supplier_name || row.supplier) + '</td><td>' + escapeHtml(row.activity_type) + '</td><td>' + escapeHtml(row.project_identifier) + '</td><td>' + escapeHtml(row.item_name || row.item_code) + '</td><td class="text-right">' + flt(row.qty, 2) + '</td><td class="text-right">' + fmt(row.net_amount) + '</td><td class="text-right">' + fmt(row.amount_with_vat) + '</td></tr>';
+			});
+			html += "</tbody></table></div>";
+			return html;
+		};
+
+		return `
+			<style>
+				.purchased-items-cost-dialog .cost-kpis {
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+					gap: 12px;
+					margin-bottom: 16px;
+				}
+				.purchased-items-cost-dialog .cost-kpi {
+					background: #f8f9fa;
+					border: 1px solid #e9ecef;
+					border-radius: 8px;
+					padding: 12px;
+				}
+				.purchased-items-cost-dialog .cost-kpi .label {
+					color: #6c757d;
+					font-size: 12px;
+					margin-bottom: 6px;
+				}
+				.purchased-items-cost-dialog .cost-kpi .value {
+					font-size: 18px;
+					font-weight: 600;
+				}
+				.purchased-items-cost-dialog .section-title {
+					color: #667eea;
+					border-bottom: 1px solid #dbe1ff;
+					padding-bottom: 6px;
+					margin: 18px 0 10px;
+				}
+				.purchased-items-cost-dialog .table-responsive {
+					overflow-x: auto;
+				}
+				.purchased-items-cost-dialog .purchased-items-table {
+					min-width: 1200px;
+				}
+			</style>
+			<div class="purchased-items-cost-dialog">
+				<div class="cost-kpis">
+					<div class="cost-kpi">
+						<div class="label">${__("Total Cost (Incl. VAT)")}</div>
+						<div class="value">${fmt(totals.amount_with_vat)}</div>
+					</div>
+					<div class="cost-kpi">
+						<div class="label">${__("Net Amount")}</div>
+						<div class="value">${fmt(totals.net_amount)}</div>
+					</div>
+					<div class="cost-kpi">
+						<div class="label">${__("Purchased Items")}</div>
+						<div class="value">${itemSummary.length}</div>
+					</div>
+					<div class="cost-kpi">
+						<div class="label">${__("Purchase Invoices")}</div>
+						<div class="value">${purchaseSummary.length}</div>
+					</div>
+				</div>
+				<h5 class="section-title">${__("Project Identifier / Activity Type Cost")}</h5>
+				${buildIdentifierActivitySummary()}
+				<h5 class="section-title">${__("Item-wise Total Cost")}</h5>
+				${buildItemSummary()}
+				<h5 class="section-title">${__("Purchase-wise Total Cost")}</h5>
+				${buildPurchaseSummary()}
+				<h5 class="section-title">${__("Purchase Invoice Item Details")}</h5>
+				${buildDetails()}
+			</div>
+		`;
 	},
 
 	render_financial_summary(frm) {
@@ -74,6 +239,7 @@ frappe.ui.form.on("Project", {
 				// Hidden for now: Gross Margin / Profit
 				// content.append(frm.events.render_gross_margin_section(frm, msg.gross_margin));
 				content.append(frm.events.render_budget_vs_actual_section(frm, msg.budget_vs_actual));
+				content.append(frm.events.render_project_identifier_activity_cost_section(frm, msg.identifier_activity_cost));
 				// Hidden for now: Billed vs Unbilled
 				// content.append(frm.events.render_billed_vs_unbilled_section(frm, msg.billed_vs_unbilled));
 				content.append(frm.events.render_outstanding_section(frm, msg.outstanding_po));
@@ -191,6 +357,9 @@ frappe.ui.form.on("Project", {
 				.project-financial-summary-wrapper .po-items-toggle:hover { text-decoration: underline; }
 				.project-financial-summary-wrapper .po-items-collapse { margin-left: 12px; }
 				.project-financial-summary-wrapper .po-items-collapse.collapse { display: none; }
+				.project-financial-summary-wrapper .section-toggle { cursor: pointer; user-select: none; }
+				.project-financial-summary-wrapper .section-toggle:hover { opacity: 0.85; }
+				.project-financial-summary-wrapper .active-po-section-content.collapse { display: none; }
 				.project-financial-summary-wrapper .cost-breakdown-bars .progress-bar { background-color: #667eea; }
 			</style>
 		`);
@@ -286,6 +455,37 @@ frappe.ui.form.on("Project", {
 			$("<div class='kpi-label'>").text(__("Total contract value (SO)")),
 			$("<div class='kpi-value'>").text(frm.events.format_currency(value))
 		));
+		return section;
+	},
+
+	render_project_identifier_activity_cost_section(frm, data) {
+		if (!data) return $("<div></div>");
+		const rows = data.rows || [];
+		const totals = data.totals || {};
+		const fmt = (v) => frm.events.format_currency(v);
+		const escapeHtml = (s) => {
+			if (s == null || s === "") return "";
+			return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+		};
+		const displayValue = (value) => escapeHtml(value || __("Not Set"));
+		const section = $(`<div class="summary-section"><h5>${__("Project Identifier / Activity Type Cost")}</h5></div>`);
+		if (!rows.length) {
+			section.append($("<p class='text-muted'>").text(__("No Project Identifier / Activity Type costs found for this project.")));
+			return section;
+		}
+		let html = '<div class="table-responsive"><table class="summary-table"><thead><tr><th>' + __("Project Identifier") + '</th><th>' + __("Activity Type") + '</th><th>' + __("Purchase Invoices") + '</th><th>' + __("Journal Entries") + '</th><th class="text-right">' + __("Purchase Invoice Cost") + '</th><th class="text-right">' + __("Journal Entry Cost") + '</th><th class="text-right">' + __("Total Cost") + '</th></tr></thead><tbody>';
+		rows.forEach((row) => {
+			const invoiceLinks = (row.purchase_invoices || []).map((name) => {
+				return frappe.utils.get_form_link("Purchase Invoice", name, true);
+			}).join("<br>");
+			const journalLinks = (row.journal_entries || []).map((name) => {
+				return frappe.utils.get_form_link("Journal Entry", name, true);
+			}).join("<br>");
+			html += '<tr><td>' + displayValue(row.project_identifier) + '</td><td>' + displayValue(row.activity_type) + '</td><td class="doc-link">' + invoiceLinks + '</td><td class="doc-link">' + journalLinks + '</td><td class="text-right">' + fmt(row.purchase_invoice_cost) + '</td><td class="text-right">' + fmt(row.journal_entry_cost) + '</td><td class="text-right">' + fmt(row.total_cost) + '</td></tr>';
+		});
+		html += '<tr class="total-row"><td colspan="4"><strong>' + __("Grand Total") + '</strong></td><td class="text-right">' + fmt(totals.purchase_invoice_cost) + '</td><td class="text-right">' + fmt(totals.journal_entry_cost) + '</td><td class="text-right">' + fmt(totals.total_cost) + '</td></tr>';
+		html += "</tbody></table></div>";
+		section.append($(html));
 		return section;
 	},
 
@@ -478,7 +678,13 @@ frappe.ui.form.on("Project", {
 	},
 
 	render_active_po_item_section(frm, poData) {
-		const section = $(`<div class="summary-section"><h5>${__("Active Purchase Orders")} (${__("Contract with supplier")})</h5></div>`);
+		const section = $(`
+			<div class="summary-section active-po-summary-section">
+				<h5 class="section-toggle active-po-section-toggle" data-expanded="false">
+					<span class="toggle-icon">▼</span> ${__("Active Purchase Orders")} (${__("Contract with supplier")})
+				</h5>
+			</div>
+		`);
 		if (!poData || !poData.length) {
 			section.append($("<p class='text-muted'>").text(__("No active purchase orders linked to this project.")));
 			return section;
@@ -490,6 +696,8 @@ frappe.ui.form.on("Project", {
 			return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 		};
 		const hasItems = poData[0] && Array.isArray(poData[0].items);
+		const content = $('<div class="active-po-section-content collapse"></div>');
+		section.append(content);
 		if (hasItems) {
 			poData.forEach((p, idx) => {
 				const link = frappe.utils.get_form_link("Purchase Order", p.po_name, true);
@@ -538,7 +746,7 @@ frappe.ui.form.on("Project", {
 						` : ""}
 					</div>
 				`);
-				section.append(poBlock);
+				content.append(poBlock);
 				if (paidItems.length) {
 					let html = '<div class="table-responsive"><table class="summary-table po-item-table"><thead><tr><th>' + __("Item") + '</th><th class="text-right">' + __("Ordered Qty") + '</th><th class="text-right">' + __("Received Qty") + '</th><th class="text-right">' + __("Invoiced") + '</th></tr></thead><tbody>';
 					paidItems.forEach((it) => {
@@ -591,8 +799,21 @@ frappe.ui.form.on("Project", {
 				html += '<tr><td class="doc-link">' + link + '</td><td>' + (p.supplier || "") + '</td><td class="text-right">' + fmt(p.grand_total) + '</td><td class="text-right">' + fmt(p.invoiced_amount) + '</td><td class="text-right">' + fmt(p.remaining) + '</td><td>' + (p.status || "") + '</td></tr>';
 			});
 			html += "</tbody></table></div>";
-			section.append($(html));
+			content.append($(html));
 		}
+		section.find(".active-po-section-toggle").on("click", function() {
+			const $toggle = $(this);
+			const expanded = $toggle.attr("data-expanded") === "true";
+			if (expanded) {
+				content.addClass("collapse");
+				$toggle.find(".toggle-icon").text("▼");
+				$toggle.attr("data-expanded", "false");
+			} else {
+				content.removeClass("collapse");
+				$toggle.find(".toggle-icon").text("▲");
+				$toggle.attr("data-expanded", "true");
+			}
+		});
 		return section;
 	},
 });

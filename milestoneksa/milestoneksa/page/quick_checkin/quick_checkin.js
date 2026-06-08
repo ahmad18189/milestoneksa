@@ -144,6 +144,7 @@ function init_page(wrapper) {
     last_in: null,
     latitude: null,
     longitude: null,
+    submitting: false,
   };
 
   // helpers
@@ -189,6 +190,10 @@ function init_page(wrapper) {
 
     const label = state.next_action === 'IN' ? __('Check In') : __('Check Out');
     $btnCheck.text(label);
+    $btnCheck
+      .toggleClass('btn-primary', state.next_action === 'IN')
+      .toggleClass('btn-danger', state.next_action === 'OUT')
+      .prop('disabled', false);
 
     const lastLabel = state.last
       ? (state.last.log_type === 'IN'
@@ -242,6 +247,10 @@ function init_page(wrapper) {
   }
 
   async function submitCheck() {
+    if (state.submitting) return;
+    state.submitting = true;
+    $btnCheck.prop('disabled', true);
+
     // best-effort position (non-blocking)
     try {
       const pos = await getPositionRobust();
@@ -281,13 +290,35 @@ function init_page(wrapper) {
       }
     } catch (e) {
       frappe.msgprint({ title: __('Error'), message: e?.message || __('Failed'), indicator: 'red' });
+    } finally {
+      state.submitting = false;
+      $btnCheck.prop('disabled', false);
     }
+  }
+
+  function confirmCheck() {
+    const isCheckingOut = state.next_action === 'OUT';
+    const lastInText = state.last_in?.time ? fmtUser(state.last_in.time) : __('Unknown');
+    const workedText = state.last_in?.time ? hhmm_since(state.last_in.time) : null;
+    const message = isCheckingOut
+      ? [
+        __('You are currently checked in.'),
+        __('Last check-in: {0}', [lastInText]),
+        workedText ? __('Worked today: {0}', [workedText]) : null,
+        __('Do you want to check out now?')
+      ]
+      : [
+        __('You are currently checked out.'),
+        __('Do you want to check in now?')
+      ];
+
+    frappe.confirm(message.filter(Boolean).join('<br>'), () => submitCheck());
   }
 
   // events
   $apply.on('click', async () => { await refreshState(); await loadCalendar(); });
   $btnRefreshLoc.on('click', () => fetchLocationAndPreview());
-  $btnCheck.on('click', () => submitCheck());
+  $btnCheck.on('click', () => confirmCheck());
   // Click to open Attendance (Form if exists, else List filtered)
 $cal.on('click', '.mksa-cal-day.is-clickable', function () {
 const date = this.dataset.date;

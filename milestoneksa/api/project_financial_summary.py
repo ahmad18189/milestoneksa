@@ -25,6 +25,7 @@ def get_financial_summary_data(project: str) -> dict:
 	last_month_invoiced, last_month_invoices = _get_last_month_invoiced(project)
 	active_po_item_detail = _get_po_item_detail(project)
 	supplier_payments_unallocated = _get_supplier_payments_unallocated_unreconciled(project)
+	purchased_items_cost = get_project_purchased_items_cost(project)
 
 	# New cards data
 	gross_margin = _get_gross_margin(costs, income)
@@ -32,6 +33,7 @@ def get_financial_summary_data(project: str) -> dict:
 	billed_vs_unbilled = _get_billed_vs_unbilled(project_doc, income)
 	invoiced_this_month = _get_invoiced_this_month(project)
 	outstanding_po = _get_outstanding_po(active_purchase_orders, project)
+	identifier_activity_cost = _get_identifier_activity_cost_summary(project)
 	sales_order_total = _get_sales_order_total(project)
 	top_suppliers = _get_top_suppliers(project)
 	cost_breakdown = _get_cost_breakdown(costs)
@@ -53,11 +55,13 @@ def get_financial_summary_data(project: str) -> dict:
 		"last_month_invoices": last_month_invoices,
 		"active_po_item_detail": active_po_item_detail,
 		"supplier_payments_unallocated_unreconciled": supplier_payments_unallocated,
+		"purchased_items_cost": purchased_items_cost,
 		"gross_margin": gross_margin,
 		"budget_vs_actual": budget_vs_actual,
 		"billed_vs_unbilled": billed_vs_unbilled,
 		"invoiced_this_month": invoiced_this_month,
 		"outstanding_po": outstanding_po,
+		"identifier_activity_cost": identifier_activity_cost,
 		"sales_order_total": sales_order_total,
 		"top_suppliers": top_suppliers,
 		"cost_breakdown": cost_breakdown,
@@ -68,6 +72,311 @@ def get_financial_summary_data(project: str) -> dict:
 			"name": project_doc.name,
 			"project_name": project_doc.project_name,
 			"company": project_doc.company or "",
+		},
+	}
+
+
+@frappe.whitelist()
+def get_project_purchased_items_cost(project: str) -> dict:
+	"""Return VAT-inclusive purchased item cost summary and PI line details for a project."""
+	if not project:
+		frappe.throw(_("Project is required"))
+
+	rows = frappe.db.sql(
+		"""
+		SELECT
+			pi.name AS purchase_invoice,
+			pi.posting_date,
+			pi.supplier,
+			pi.supplier_name,
+			COALESCE(NULLIF(pi_item.custom_activity_type, ''), pi.custom_activity_type) AS activity_type,
+			COALESCE(NULLIF(pi_item.custom_project_identifier, ''), pi.custom_project_identifier) AS project_identifier,
+			pi_item.item_code,
+			pi_item.item_name,
+			pi_item.uom,
+			pi_item.qty,
+			pi_item.base_net_amount,
+			CASE
+				WHEN COALESCE(pi.base_net_total, 0) > 0
+				THEN pi_item.base_net_amount * (pi.base_grand_total / pi.base_net_total)
+				ELSE pi_item.base_net_amount
+			END AS base_amount_with_vat,
+			COALESCE(NULLIF(pi_item.purchase_order, ''), po_from_item.parent, po_from_pr.parent) AS purchase_order
+		FROM `tabPurchase Invoice Item` pi_item
+		INNER JOIN `tabPurchase Invoice` pi ON pi.name = pi_item.parent
+		LEFT JOIN `tabPurchase Order Item` po_from_item ON po_from_item.name = pi_item.po_detail
+		LEFT JOIN `tabPurchase Receipt Item` pr_item ON pr_item.name = pi_item.pr_detail
+		LEFT JOIN `tabPurchase Order Item` po_from_pr ON po_from_pr.name = pr_item.purchase_order_item
+		LEFT JOIN `tabPurchase Order` po ON po.name = COALESCE(NULLIF(pi_item.purchase_order, ''), po_from_item.parent, po_from_pr.parent)
+		WHERE pi.docstatus = 1
+		AND (
+			pi_item.project = %(project)s
+			OR (COALESCE(pi_item.project, '') = '' AND pi.project = %(project)s)
+			OR (po.name IS NOT NULL AND po.project = %(project)s)
+			OR po_from_item.project = %(project)s
+			OR po_from_pr.project = %(project)s
+		)
+		ORDER BY pi.posting_date DESC, pi.name DESC, pi_item.idx ASC
+		""",
+		{"project": project},
+		as_dict=True,
+	)
+
+	item_summary_map = {}
+	identifier_activity_summary_map = {}
+	purchase_summary_map = {}
+	total_net = 0
+	total_with_vat = 0
+	details = []
+
+	for row in rows:
+		item_code = row.get("item_code") or ""
+		item_name = row.get("item_name") or item_code
+		uom = row.get("uom") or ""
+		qty = flt(row.get("qty"), 6)
+		net_amount = flt(row.get("base_net_amount"), 2)
+		amount_with_vat = flt(row.get("base_amount_with_vat"), 2)
+		total_net += net_amount
+		total_with_vat += amount_with_vat
+
+		item_key = (item_code, item_name, uom)
+		if item_key not in item_summary_map:
+			item_summary_map[item_key] = {
+				"item_code": item_code,
+				"item_name": item_name,
+				"uom": uom,
+				"activity_types": set(),
+				"project_identifiers": set(),
+				"qty": 0,
+				"net_amount": 0,
+				"amount_with_vat": 0,
+			}
+		if row.get("activity_type"):
+			item_summary_map[item_key]["activity_types"].add(row.get("activity_type"))
+		if row.get("project_identifier"):
+			item_summary_map[item_key]["project_identifiers"].add(row.get("project_identifier"))
+		item_summary_map[item_key]["qty"] += qty
+		item_summary_map[item_key]["net_amount"] += net_amount
+		item_summary_map[item_key]["amount_with_vat"] += amount_with_vat
+
+		project_identifier = row.get("project_identifier") or _("Not Set")
+		activity_type = row.get("activity_type") or _("Not Set")
+		identifier_activity_key = (project_identifier, activity_type)
+		if identifier_activity_key not in identifier_activity_summary_map:
+			identifier_activity_summary_map[identifier_activity_key] = {
+				"project_identifier": project_identifier,
+				"activity_type": activity_type,
+				"purchase_invoices": set(),
+				"qty": 0,
+				"net_amount": 0,
+				"amount_with_vat": 0,
+			}
+		if row.get("purchase_invoice"):
+			identifier_activity_summary_map[identifier_activity_key]["purchase_invoices"].add(row.get("purchase_invoice"))
+		identifier_activity_summary_map[identifier_activity_key]["qty"] += qty
+		identifier_activity_summary_map[identifier_activity_key]["net_amount"] += net_amount
+		identifier_activity_summary_map[identifier_activity_key]["amount_with_vat"] += amount_with_vat
+
+		pi_name = row.get("purchase_invoice") or ""
+		if pi_name not in purchase_summary_map:
+			purchase_summary_map[pi_name] = {
+				"purchase_invoice": pi_name,
+				"posting_date": str(row.get("posting_date")) if row.get("posting_date") else "",
+				"supplier": row.get("supplier") or "",
+				"supplier_name": row.get("supplier_name") or row.get("supplier") or "",
+				"activity_types": set(),
+				"project_identifiers": set(),
+				"purchase_orders": set(),
+				"net_amount": 0,
+				"amount_with_vat": 0,
+			}
+		if row.get("activity_type"):
+			purchase_summary_map[pi_name]["activity_types"].add(row.get("activity_type"))
+		if row.get("project_identifier"):
+			purchase_summary_map[pi_name]["project_identifiers"].add(row.get("project_identifier"))
+		if row.get("purchase_order"):
+			purchase_summary_map[pi_name]["purchase_orders"].add(row.get("purchase_order"))
+		purchase_summary_map[pi_name]["net_amount"] += net_amount
+		purchase_summary_map[pi_name]["amount_with_vat"] += amount_with_vat
+
+		details.append({
+			"purchase_invoice": pi_name,
+			"posting_date": str(row.get("posting_date")) if row.get("posting_date") else "",
+			"supplier": row.get("supplier") or "",
+			"supplier_name": row.get("supplier_name") or row.get("supplier") or "",
+			"activity_type": row.get("activity_type") or "",
+			"project_identifier": row.get("project_identifier") or "",
+			"purchase_order": row.get("purchase_order") or "",
+			"item_code": item_code,
+			"item_name": item_name,
+			"uom": uom,
+			"qty": qty,
+			"net_amount": net_amount,
+			"amount_with_vat": amount_with_vat,
+		})
+
+	item_summary = []
+	for item in item_summary_map.values():
+		item["activity_types"] = ", ".join(sorted(item["activity_types"]))
+		item["project_identifiers"] = ", ".join(sorted(item["project_identifiers"]))
+		item_summary.append(item)
+	item_summary = sorted(
+		item_summary,
+		key=lambda d: flt(d.get("amount_with_vat"), 0),
+		reverse=True,
+	)
+	identifier_activity_summary = []
+	for group in identifier_activity_summary_map.values():
+		group["purchase_invoices"] = sorted(group["purchase_invoices"])
+		identifier_activity_summary.append(group)
+	identifier_activity_summary = sorted(
+		identifier_activity_summary,
+		key=lambda d: flt(d.get("amount_with_vat"), 0),
+		reverse=True,
+	)
+	purchase_summary = []
+	for purchase in purchase_summary_map.values():
+		purchase["activity_types"] = ", ".join(sorted(purchase["activity_types"]))
+		purchase["project_identifiers"] = ", ".join(sorted(purchase["project_identifiers"]))
+		purchase["purchase_orders"] = ", ".join(sorted(purchase["purchase_orders"]))
+		purchase_summary.append(purchase)
+	purchase_summary = sorted(
+		purchase_summary,
+		key=lambda d: flt(d.get("amount_with_vat"), 0),
+		reverse=True,
+	)
+
+	return {
+		"item_summary": item_summary,
+		"identifier_activity_summary": identifier_activity_summary,
+		"purchase_summary": purchase_summary,
+		"details": details,
+		"totals": {
+			"net_amount": flt(total_net, 2),
+			"amount_with_vat": flt(total_with_vat, 2),
+		},
+	}
+
+
+def _get_identifier_activity_cost_summary(project: str) -> dict:
+	"""Combined PI + JE cost grouped by Project Identifier and Activity Type."""
+	if not project:
+		return {"rows": [], "totals": {}}
+
+	group_map = {}
+	totals = {
+		"purchase_invoice_cost": 0,
+		"journal_entry_cost": 0,
+		"total_cost": 0,
+	}
+
+	def get_group(project_identifier, activity_type):
+		project_identifier = project_identifier or _("Not Set")
+		activity_type = activity_type or _("Not Set")
+		key = (project_identifier, activity_type)
+		if key not in group_map:
+			group_map[key] = {
+				"project_identifier": project_identifier,
+				"activity_type": activity_type,
+				"purchase_invoices": set(),
+				"journal_entries": set(),
+				"purchase_invoice_cost": 0,
+				"journal_entry_cost": 0,
+				"total_cost": 0,
+			}
+		return group_map[key]
+
+	pi_rows = frappe.db.sql(
+		"""
+		SELECT
+			pi.name AS purchase_invoice,
+			COALESCE(NULLIF(pi_item.custom_activity_type, ''), pi.custom_activity_type) AS activity_type,
+			COALESCE(NULLIF(pi_item.custom_project_identifier, ''), pi.custom_project_identifier) AS project_identifier,
+			CASE
+				WHEN COALESCE(pi.base_net_total, 0) > 0
+				THEN pi_item.base_net_amount * (pi.base_grand_total / pi.base_net_total)
+				ELSE pi_item.base_net_amount
+			END AS amount_with_vat
+		FROM `tabPurchase Invoice Item` pi_item
+		INNER JOIN `tabPurchase Invoice` pi ON pi.name = pi_item.parent
+		LEFT JOIN `tabPurchase Order Item` po_from_item ON po_from_item.name = pi_item.po_detail
+		LEFT JOIN `tabPurchase Receipt Item` pr_item ON pr_item.name = pi_item.pr_detail
+		LEFT JOIN `tabPurchase Order Item` po_from_pr ON po_from_pr.name = pr_item.purchase_order_item
+		LEFT JOIN `tabPurchase Order` po ON po.name = COALESCE(NULLIF(pi_item.purchase_order, ''), po_from_item.parent, po_from_pr.parent)
+		WHERE pi.docstatus = 1
+		AND (
+			pi_item.project = %(project)s
+			OR (COALESCE(pi_item.project, '') = '' AND pi.project = %(project)s)
+			OR (po.name IS NOT NULL AND po.project = %(project)s)
+			OR po_from_item.project = %(project)s
+			OR po_from_pr.project = %(project)s
+		)
+		""",
+		{"project": project},
+		as_dict=True,
+	)
+	for row in pi_rows or []:
+		amount = flt(row.get("amount_with_vat"), 2)
+		group = get_group(row.get("project_identifier"), row.get("activity_type"))
+		if row.get("purchase_invoice"):
+			group["purchase_invoices"].add(row.get("purchase_invoice"))
+		group["purchase_invoice_cost"] += amount
+		group["total_cost"] += amount
+		totals["purchase_invoice_cost"] += amount
+		totals["total_cost"] += amount
+
+	activity_field = (
+		"jea.custom_activity_type"
+		if frappe.db.has_column("Journal Entry Account", "custom_activity_type")
+		else "''"
+	)
+	identifier_field = (
+		"jea.custom_project_identifier"
+		if frappe.db.has_column("Journal Entry Account", "custom_project_identifier")
+		else "''"
+	)
+	je_rows = frappe.db.sql(
+		f"""
+		SELECT
+			je.name AS journal_entry,
+			{activity_field} AS activity_type,
+			{identifier_field} AS project_identifier,
+			jea.debit AS amount
+		FROM `tabJournal Entry Account` jea
+		INNER JOIN `tabJournal Entry` je ON je.name = jea.parent
+		WHERE je.docstatus = 1
+			AND jea.project = %(project)s
+			AND COALESCE(jea.debit, 0) > 0
+		""",
+		{"project": project},
+		as_dict=True,
+	)
+	for row in je_rows or []:
+		amount = flt(row.get("amount"), 2)
+		group = get_group(row.get("project_identifier"), row.get("activity_type"))
+		if row.get("journal_entry"):
+			group["journal_entries"].add(row.get("journal_entry"))
+		group["journal_entry_cost"] += amount
+		group["total_cost"] += amount
+		totals["journal_entry_cost"] += amount
+		totals["total_cost"] += amount
+
+	rows = []
+	for row in group_map.values():
+		row["purchase_invoices"] = sorted(row["purchase_invoices"])
+		row["journal_entries"] = sorted(row["journal_entries"])
+		row["purchase_invoice_cost"] = flt(row["purchase_invoice_cost"], 2)
+		row["journal_entry_cost"] = flt(row["journal_entry_cost"], 2)
+		row["total_cost"] = flt(row["total_cost"], 2)
+		rows.append(row)
+	rows = sorted(rows, key=lambda d: flt(d.get("total_cost"), 0), reverse=True)
+
+	return {
+		"rows": rows,
+		"totals": {
+			"purchase_invoice_cost": flt(totals["purchase_invoice_cost"], 2),
+			"journal_entry_cost": flt(totals["journal_entry_cost"], 2),
+			"total_cost": flt(totals["total_cost"], 2),
 		},
 	}
 

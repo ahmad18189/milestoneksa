@@ -28,7 +28,7 @@ frappe.ui.form.on("Project", {
 					message: __("Task table synced"),
 					indicator: "green"
 				});
-			});
+			}, __("Project Tasks"));
 			frm.add_custom_button(__("Send Daily Task Summary"), () => {
 				frappe.call({
 					method: "milestoneksa.tasks.daily_task_summary.send_daily_task_summary_for_project",
@@ -43,7 +43,7 @@ frappe.ui.form.on("Project", {
 						frappe.msgprint({ title: __("Error"), message: err.message || err.exc, indicator: "red" });
 					},
 				});
-			});
+			}, __("Project Tasks"));
 		}
 		
 		frm.events.render_project_task_tab(frm);

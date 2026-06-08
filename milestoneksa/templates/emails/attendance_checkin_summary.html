@@ -1,0 +1,69 @@
+<div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; color: #1f2937; line-height: 1.6; max-width: 720px; margin: 0 auto;">
+	<div style="background: #1e40af; color: #ffffff; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+		<h2 style="margin: 0; font-size: 20px;">{{ labels.title }}</h2>
+		<p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95;">{{ labels.report_date }}: {{ report_date }}</p>
+	</div>
+
+	<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-top: none; padding: 14px 20px;">
+		<p style="margin: 0; font-size: 14px;">
+			<strong>{{ labels.summary }}:</strong>
+			{{ labels.checked_in_title }} ({{ counts.checked_in }}) —
+			{{ labels.not_checked_in_title }} ({{ counts.not_checked_in }}) —
+			{{ labels.count }} {{ counts.total }}
+		</p>
+	</div>
+
+	<div style="border: 1px solid #e2e8f0; border-top: none; padding: 18px 20px;">
+		<h3 style="margin: 0 0 10px; color: #166534; font-size: 16px;">{{ labels.checked_in_title }} ({{ counts.checked_in }})</h3>
+		{% if checked_in %}
+		<table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+			<thead>
+				<tr style="background: #ecfdf5;">
+					<th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">{{ labels.employee }}</th>
+					<th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">{{ labels.department }}</th>
+					<th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">{{ labels.checkin_time }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in checked_in %}
+				<tr>
+					<td style="padding: 10px; border: 1px solid #e5e7eb;">{{ row.employee_name }}</td>
+					<td style="padding: 10px; border: 1px solid #e5e7eb;">{{ row.department }}</td>
+					<td style="padding: 10px; border: 1px solid #e5e7eb;">{{ row.checkin_time }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% else %}
+		<p style="color: #6b7280; margin: 0;">{{ labels.no_records }}</p>
+		{% endif %}
+	</div>
+
+	<div style="border: 1px solid #e2e8f0; border-top: none; padding: 18px 20px;">
+		<h3 style="margin: 0 0 10px; color: #b91c1c; font-size: 16px;">{{ labels.not_checked_in_title }} ({{ counts.not_checked_in }})</h3>
+		{% if not_checked_in %}
+		<table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+			<thead>
+				<tr style="background: #fef2f2;">
+					<th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">{{ labels.employee }}</th>
+					<th style="padding: 10px; border: 1px solid #d1d5db; text-align: right;">{{ labels.department }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in not_checked_in %}
+				<tr>
+					<td style="padding: 10px; border: 1px solid #e5e7eb;">{{ row.employee_name }}</td>
+					<td style="padding: 10px; border: 1px solid #e5e7eb;">{{ row.department }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% else %}
+		<p style="color: #6b7280; margin: 0;">{{ labels.no_records }}</p>
+		{% endif %}
+	</div>
+
+	<div style="border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; padding: 12px 20px; background: #f9fafb;">
+		<p style="margin: 0; font-size: 12px; color: #6b7280;">{{ labels.footer }}</p>
+	</div>
+</div>

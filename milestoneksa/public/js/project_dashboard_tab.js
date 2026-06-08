@@ -975,8 +975,8 @@ frappe.ui.form.on("Project", {
 
 	add_dashboard_toolbar(frm) {
 		// Remove previous buttons if any
-		frm.page.remove_inner_button("Export PDF", "Dashboard");
-		frm.page.remove_inner_button("Print Dashboard");
+		frm.page.remove_inner_button(__("Export PDF"), __("Dashboard"));
+		frm.page.remove_inner_button(__("Print Dashboard"), __("Dashboard"));
 		
 		// Add export PDF button
 		frm.page.add_inner_button(__("Export PDF"), () => {
@@ -986,7 +986,7 @@ frappe.ui.form.on("Project", {
 		// Add print button
 		frm.page.add_inner_button(__("Print Dashboard"), () => {
 			window.print();
-		});
+		}, __("Dashboard"));
 	},
 	
 	export_dashboard_pdf(frm) {

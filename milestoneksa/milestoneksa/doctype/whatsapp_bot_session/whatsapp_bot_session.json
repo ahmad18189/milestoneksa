@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:phone",
+ "creation": "2026-06-08 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "phone",
+  "state",
+  "selected_project",
+  "crm_lead",
+  "last_message_at",
+  "last_incoming_message",
+  "started_by",
+  "template_sent",
+  "last_interactive_payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phone",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "State"
+  },
+  {
+   "fieldname": "selected_project",
+   "fieldtype": "Link",
+   "label": "Selected Project",
+   "options": "WhatsApp Chatbot Project"
+  },
+  {
+   "fieldname": "crm_lead",
+   "fieldtype": "Link",
+   "label": "CRM Lead",
+   "options": "CRM Lead"
+  },
+  {
+   "fieldname": "last_message_at",
+   "fieldtype": "Datetime",
+   "label": "Last Message At"
+  },
+  {
+   "fieldname": "last_incoming_message",
+   "fieldtype": "Small Text",
+   "label": "Last Incoming Message"
+  },
+  {
+   "fieldname": "started_by",
+   "fieldtype": "Select",
+   "label": "Started By",
+   "options": "Customer\nCompany"
+  },
+  {
+   "default": "0",
+   "fieldname": "template_sent",
+   "fieldtype": "Check",
+   "label": "Template Sent"
+  },
+  {
+   "fieldname": "last_interactive_payload",
+   "fieldtype": "Data",
+   "label": "Last Interactive Payload"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-08 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "WhatsApp Bot Session",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

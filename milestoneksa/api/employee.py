@@ -3,19 +3,43 @@
 
 import frappe
 from frappe import _
-from frappe.utils import getdate, flt
+from frappe.utils import add_years, flt, getdate, today
 
 
 def validate_employee(doc, method=None):
 	"""
 	Main validator for Employee:
+	- Set contract_end_date from date_of_joining when empty (+1 year, rolled forward if past).
 	- Recompute custom_total_cost from Residence Costs child table.
 	- Validate residence start/end dates on the parent.
 	- Validate Sponsorship Transfer rows (required fields, order, overlap).
 	"""
+	set_contract_end_date(doc)
 	compute_residence_total(doc)
 	#validate_residence_dates(doc)
 	#validate_sponsorship_dates(doc)
+
+
+def compute_contract_end_date(date_of_joining):
+	"""Return Date of Joining + 1 year, rolled forward until >= today."""
+	if not date_of_joining:
+		return None
+
+	contract_end = add_years(getdate(date_of_joining), 1)
+	today_date = getdate(today())
+
+	while contract_end < today_date:
+		contract_end = add_years(contract_end, 1)
+
+	return contract_end
+
+
+def set_contract_end_date(doc):
+	"""Set contract_end_date only when it is empty."""
+	if doc.get("contract_end_date") or not doc.date_of_joining:
+		return
+
+	doc.contract_end_date = compute_contract_end_date(doc.date_of_joining)
 
 
 def compute_residence_total(doc):

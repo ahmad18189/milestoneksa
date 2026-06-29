@@ -280,6 +280,8 @@ def _get_identifier_activity_cost_summary(project: str) -> dict:
 				"activity_type": activity_type,
 				"purchase_invoices": set(),
 				"journal_entries": set(),
+				"purchase_invoice_details": [],
+				"journal_entry_details": [],
 				"purchase_invoice_cost": 0,
 				"journal_entry_cost": 0,
 				"total_cost": 0,
@@ -290,8 +292,15 @@ def _get_identifier_activity_cost_summary(project: str) -> dict:
 		"""
 		SELECT
 			pi.name AS purchase_invoice,
+			pi.posting_date,
+			pi.supplier,
+			pi.supplier_name,
 			COALESCE(NULLIF(pi_item.custom_activity_type, ''), pi.custom_activity_type) AS activity_type,
 			COALESCE(NULLIF(pi_item.custom_project_identifier, ''), pi.custom_project_identifier) AS project_identifier,
+			pi_item.item_code,
+			pi_item.item_name,
+			pi_item.qty,
+			pi_item.base_net_amount,
 			CASE
 				WHEN COALESCE(pi.base_net_total, 0) > 0
 				THEN pi_item.base_net_amount * (pi.base_grand_total / pi.base_net_total)
@@ -320,6 +329,17 @@ def _get_identifier_activity_cost_summary(project: str) -> dict:
 		group = get_group(row.get("project_identifier"), row.get("activity_type"))
 		if row.get("purchase_invoice"):
 			group["purchase_invoices"].add(row.get("purchase_invoice"))
+		group["purchase_invoice_details"].append({
+			"purchase_invoice": row.get("purchase_invoice") or "",
+			"posting_date": str(row.get("posting_date")) if row.get("posting_date") else "",
+			"supplier": row.get("supplier") or "",
+			"supplier_name": row.get("supplier_name") or row.get("supplier") or "",
+			"item_code": row.get("item_code") or "",
+			"item_name": row.get("item_name") or row.get("item_code") or "",
+			"qty": flt(row.get("qty"), 6),
+			"net_amount": flt(row.get("base_net_amount"), 2),
+			"amount_with_vat": amount,
+		})
 		group["purchase_invoice_cost"] += amount
 		group["total_cost"] += amount
 		totals["purchase_invoice_cost"] += amount
@@ -339,6 +359,10 @@ def _get_identifier_activity_cost_summary(project: str) -> dict:
 		f"""
 		SELECT
 			je.name AS journal_entry,
+			je.posting_date,
+			je.voucher_type,
+			je.user_remark,
+			jea.account,
 			{activity_field} AS activity_type,
 			{identifier_field} AS project_identifier,
 			jea.debit AS amount
@@ -356,6 +380,14 @@ def _get_identifier_activity_cost_summary(project: str) -> dict:
 		group = get_group(row.get("project_identifier"), row.get("activity_type"))
 		if row.get("journal_entry"):
 			group["journal_entries"].add(row.get("journal_entry"))
+		group["journal_entry_details"].append({
+			"journal_entry": row.get("journal_entry") or "",
+			"posting_date": str(row.get("posting_date")) if row.get("posting_date") else "",
+			"voucher_type": row.get("voucher_type") or "",
+			"account": row.get("account") or "",
+			"user_remark": row.get("user_remark") or "",
+			"amount": amount,
+		})
 		group["journal_entry_cost"] += amount
 		group["total_cost"] += amount
 		totals["journal_entry_cost"] += amount
@@ -368,6 +400,16 @@ def _get_identifier_activity_cost_summary(project: str) -> dict:
 		row["purchase_invoice_cost"] = flt(row["purchase_invoice_cost"], 2)
 		row["journal_entry_cost"] = flt(row["journal_entry_cost"], 2)
 		row["total_cost"] = flt(row["total_cost"], 2)
+		row["purchase_invoice_details"] = sorted(
+			row["purchase_invoice_details"],
+			key=lambda d: (d.get("posting_date") or "", d.get("purchase_invoice") or ""),
+			reverse=True,
+		)
+		row["journal_entry_details"] = sorted(
+			row["journal_entry_details"],
+			key=lambda d: (d.get("posting_date") or "", d.get("journal_entry") or ""),
+			reverse=True,
+		)
 		rows.append(row)
 	rows = sorted(rows, key=lambda d: flt(d.get("total_cost"), 0), reverse=True)
 

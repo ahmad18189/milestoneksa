@@ -1,0 +1,57 @@
+<div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; color: #1f2937; line-height: 1.6; max-width: 800px; width: 100%; margin: 0 auto;">
+	<div style="background: #047857; color: #ffffff; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+		<h2 style="margin: 0; font-size: 20px;">{{ labels.title }}</h2>
+		<p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95;">{{ labels.alert_date }}: {{ alert_date }}</p>
+	</div>
+
+	<div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-top: none; padding: 16px 20px;">
+		<p style="margin: 0; font-size: 15px; color: #065f46;"><strong>{{ status_label }}</strong></p>
+		<p style="margin: 10px 0 0; font-size: 14px; color: #047857;">{{ status_message }}</p>
+	</div>
+
+	<div style="border: 1px solid #e2e8f0; border-top: none; padding: 18px 20px;">
+		<table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+			<tr>
+				<td style="padding: 8px 0; width: 35%; color: #6b7280;">{{ labels.employee }}</td>
+				<td style="padding: 8px 0; font-weight: bold;">{{ employee_name }}</td>
+			</tr>
+			<tr>
+				<td style="padding: 8px 0; color: #6b7280;">{{ labels.department }}</td>
+				<td style="padding: 8px 0;">{{ department or labels.no_records }}</td>
+			</tr>
+			<tr>
+				<td style="padding: 8px 0; color: #6b7280;">{{ labels.previous_status }}</td>
+				<td style="padding: 8px 0;">{{ previous_status }}</td>
+			</tr>
+			<tr>
+				<td style="padding: 8px 0; color: #6b7280;">{{ labels.new_status }}</td>
+				<td style="padding: 8px 0; font-weight: bold;">{{ new_status }}</td>
+			</tr>
+			{% if new_contract_end_date %}
+			<tr>
+				<td style="padding: 8px 0; color: #6b7280;">{{ labels.new_contract_end }}</td>
+				<td style="padding: 8px 0; font-weight: bold;">{{ new_contract_end_date }}</td>
+			</tr>
+			{% endif %}
+			{% if final_eos_amount is not none %}
+			<tr>
+				<td style="padding: 8px 0; color: #6b7280;">{{ labels.final_eos }}</td>
+				<td style="padding: 8px 0; font-weight: bold;">{{ final_eos_amount }} SAR</td>
+			</tr>
+			{% endif %}
+			{% if acted_by %}
+			<tr>
+				<td style="padding: 8px 0; color: #6b7280;">{{ labels.acted_by }}</td>
+				<td style="padding: 8px 0;">{{ acted_by }}</td>
+			</tr>
+			{% endif %}
+		</table>
+	</div>
+
+	<div style="border: 1px solid #e2e8f0; border-top: none; padding: 16px 20px; border-radius: 0 0 8px 8px;">
+		<p style="margin: 0 0 12px;">
+			<a href="{{ review_link }}" style="color: #1e40af; font-weight: bold;">{{ labels.view_review }}</a>
+		</p>
+		<p style="margin: 0; font-size: 12px; color: #6b7280;">{{ labels.footer }}</p>
+	</div>
+</div>

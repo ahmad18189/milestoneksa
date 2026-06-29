@@ -32,6 +32,8 @@ app_include_css = [
     "/assets/milestoneksa/css/quick_checkin.css",
     "/assets/milestoneksa/css/font.css",
     "/assets/milestoneksa/css/announcement_popup.css",
+    "/assets/milestoneksa/css/project_task_tab.css?v=50",
+    "/assets/milestoneksa/css/lib/tabulator.min.css",
 ]
 
 app_include_js = [
@@ -44,6 +46,7 @@ app_include_js = [
     #"/assets/milestoneksa/js/fix_task_gantt_scroll.js",
     #"/assets/milestoneksa/js/task_gantt_config.js",
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.umd.min.js",
+    "/assets/milestoneksa/js/lib/tabulator.min.js",
 ]
 
 page_css = {
@@ -51,8 +54,17 @@ page_css = {
 }
 
 doctype_js = {
-	"Employee": ["public/js/employee_assets.js","public/js/employee_salary_ui.js","public/js/employee_custody_ui.js"],
-	"HR Settings": ["public/js/hr_settings_attendance_emails.js"],
+	"Employee": [
+		"public/js/employee_assets.js",
+		"public/js/employee_salary_ui.js",
+		"public/js/employee_custody_ui.js",
+		"public/js/employee_contract_end_date.js",
+	],
+	"HR Settings": [
+		"public/js/hr_settings_attendance_emails.js",
+		"public/js/hr_settings_contract_alerts.js",
+	],
+	"Task": ["public/js/task_completion_acknowledgment.js"],
 	"Project": ["public/js/project_task_tab.js", "public/js/project_dashboard_tab.js", "public/js/project_financial_summary_tab.js", "public/js/project_building_info.js"],
 	"Project Proposal": ["public/js/project_proposal_dashboard.js", "public/js/project_building_info.js"]
 }
@@ -78,11 +90,25 @@ doc_events = {
 		"on_cancel": "milestoneksa.milestoneksa.project.recalculate_project_purchase_cost_on_pi_change",
 	},
 	"WhatsApp Message": {
-		"before_validate": "milestoneksa.chatbot.whatsapp_bot.link_whatsapp_message_to_crm",
+		"before_validate": [
+			"milestoneksa.chatbot.whatsapp_bot.link_whatsapp_message_to_crm",
+			"milestoneksa.chatbot.whatsapp_bot.prepare_chatbot_template_body_param",
+		],
 		"after_insert": "milestoneksa.chatbot.whatsapp_bot.handle_whatsapp_message",
 	},
 	"WhatsApp Templates": {
 		"before_validate": "milestoneksa.chatbot.whatsapp_bot.validate_chatbot_whatsapp_template",
+	},
+	"Lead": {
+		"after_insert": "milestoneksa.crm_lead_sync.sync_erpnext_lead_to_crm",
+		"on_update": "milestoneksa.crm_lead_sync.sync_erpnext_lead_to_crm",
+	},
+	"CRM Lead": {
+		"after_insert": "milestoneksa.crm_lead_sync.sync_crm_lead_to_erpnext",
+		"on_update": "milestoneksa.crm_lead_sync.sync_crm_lead_to_erpnext",
+	},
+	"Employee Contract End Review": {
+		"on_update": "milestoneksa.tasks.contract_expiry_alerts.on_contract_review_update",
 	},
 }
 
@@ -93,6 +119,18 @@ scheduler_events = {
 		# Attendance check-in/check-out emails: every 5 min Sun–Thu; times from HR Settings
 		"*/5 * * * 0-4": [
 			"milestoneksa.tasks.attendance_email_reports.run_due_attendance_email_reports"
+		],
+		"0 8 * * 0-4": [
+			"milestoneksa.tasks.contract_expiry_alerts.run_contract_expiry_alerts"
+		],
+		# Project task inactivity: daily notice when user has not altered tasks for 15+ days
+		"0 9 * * 0-4": [
+			"milestoneksa.project_user_inactivity_email.run_daily_project_inactivity_emails",
+			"milestoneksa.tasks.auto_attendance_ahmed_abdelrahman.run_daily_auto_checkin",
+		],
+		# Ahmed Abdelrahman auto check-out (random 5–7 PM), Sun–Thu only
+		"0 19 * * 0-4": [
+			"milestoneksa.tasks.auto_attendance_ahmed_abdelrahman.run_daily_auto_checkout",
 		],
 	},
 }
@@ -216,13 +254,15 @@ override_email_send = "milestoneksa.email_api.send_email_via_api"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"CRM Task": "milestoneksa.crm_task_permissions.get_permission_query_conditions",
+}
+
+has_permission = {
+	"CRM Task": "milestoneksa.crm_task_permissions.has_crm_task_permission",
+}
+
+after_migrate = ["milestoneksa.crm_task_permissions.ensure_crm_task_docperms"]
 
 # DocType Class
 # ---------------
@@ -279,7 +319,18 @@ override_doctype_class = {
 override_whitelisted_methods = {
 	"crm.api.whatsapp.is_whatsapp_enabled": "milestoneksa.chatbot.whatsapp_bot.crm_is_whatsapp_enabled",
 	"crm.api.whatsapp.is_whatsapp_installed": "milestoneksa.chatbot.whatsapp_bot.crm_is_whatsapp_installed",
+	"crm.api.whatsapp.get_whatsapp_messages": "milestoneksa.chatbot.whatsapp_bot.crm_get_whatsapp_messages",
+	"crm.api.doc.delete_bulk_docs": "milestoneksa.api.crm_compat.delete_bulk_docs",
 }
+
+# CRM v1.74 expects Frappe v16 APIs; patch before CRM imports them.
+import frappe.config as _frappe_config_module  # noqa: E402, F401
+import frappe.desk.form.assign_to as _assign_to_module  # noqa: E402, F401
+import frappe.model.delete_doc as _delete_doc_module  # noqa: E402
+
+from milestoneksa.compat.delete_doc_shim import patch_frappe_for_crm  # noqa: E402
+
+patch_frappe_for_crm()
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
@@ -295,7 +346,7 @@ override_whitelisted_methods = {
 # Ignore links to specified DocTypes when deleting documents
 # -----------------------------------------------------------
 
-# ignore_links_on_delete = ["Communication", "ToDo"]
+ignore_links_on_delete = ["CRM Notification"]
 
 # Request Events
 # ----------------

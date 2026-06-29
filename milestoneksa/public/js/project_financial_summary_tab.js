@@ -321,6 +321,64 @@ frappe.ui.form.on("Project", {
 					background: #f8f9fa;
 				}
 				.project-financial-summary-wrapper .summary-table .text-right { text-align: right; }
+				.project-financial-summary-wrapper .summary-table .text-center { text-align: center; }
+				.project-financial-summary-wrapper .project-activity-matrix {
+					min-width: 760px;
+				}
+				.project-financial-summary-wrapper .project-activity-matrix th,
+				.project-financial-summary-wrapper .project-activity-matrix td {
+					border: 1px solid #e6e9ef;
+					white-space: nowrap;
+				}
+				.project-financial-summary-wrapper .identifier-activity-section .identifier-activity-summary {
+					min-width: 860px;
+				}
+				.project-financial-summary-wrapper .identifier-activity-toggle-row {
+					cursor: pointer;
+				}
+				.project-financial-summary-wrapper .identifier-activity-toggle-row:hover td {
+					background: #f8fbff;
+				}
+				.project-financial-summary-wrapper .identifier-activity-table-toggle {
+					align-items: center;
+					background: #f8f9fa;
+					border: 1px solid #e6e9ef;
+					border-radius: 6px;
+					color: #495057;
+					cursor: pointer;
+					display: inline-flex;
+					font-size: 13px;
+					font-weight: 600;
+					gap: 6px;
+					margin: 10px 0 8px;
+					padding: 7px 10px;
+					user-select: none;
+				}
+				.project-financial-summary-wrapper .identifier-activity-table-toggle:hover {
+					background: #eef6ff;
+					border-color: #b8d7ff;
+				}
+				.project-financial-summary-wrapper .identifier-activity-table-content.collapse {
+					display: none;
+				}
+				.project-financial-summary-wrapper .identifier-activity-detail-row > td {
+					background: #fbfcff;
+					padding: 12px 16px;
+				}
+				.project-financial-summary-wrapper .identifier-activity-detail-grid {
+					display: grid;
+					gap: 14px;
+				}
+				.project-financial-summary-wrapper .identifier-activity-detail-title {
+					color: #667eea;
+					font-size: 13px;
+					font-weight: 700;
+					margin: 4px 0 8px;
+				}
+				.project-financial-summary-wrapper .identifier-activity-detail-table {
+					font-size: 12px;
+					min-width: 720px;
+				}
 				.project-financial-summary-wrapper .doc-link { color: #2490ef; }
 				.project-financial-summary-wrapper .payment-overview-kpi {
 					display: grid;
@@ -468,24 +526,159 @@ frappe.ui.form.on("Project", {
 			return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 		};
 		const displayValue = (value) => escapeHtml(value || __("Not Set"));
-		const section = $(`<div class="summary-section"><h5>${__("Project Identifier / Activity Type Cost")}</h5></div>`);
+		const section = $(`
+			<div class="summary-section identifier-activity-section">
+				<h5 class="section-toggle identifier-activity-section-toggle" data-expanded="false">
+					<span class="toggle-icon">▼</span> ${__("Project Identifier / Activity Type Cost")}
+				</h5>
+				<div class="identifier-activity-section-content collapse"></div>
+			</div>
+		`);
+		const content = section.find(".identifier-activity-section-content");
 		if (!rows.length) {
-			section.append($("<p class='text-muted'>").text(__("No Project Identifier / Activity Type costs found for this project.")));
+			content.append($("<p class='text-muted'>").text(__("No Project Identifier / Activity Type costs found for this project.")));
 			return section;
 		}
-		let html = '<div class="table-responsive"><table class="summary-table"><thead><tr><th>' + __("Project Identifier") + '</th><th>' + __("Activity Type") + '</th><th>' + __("Purchase Invoices") + '</th><th>' + __("Journal Entries") + '</th><th class="text-right">' + __("Purchase Invoice Cost") + '</th><th class="text-right">' + __("Journal Entry Cost") + '</th><th class="text-right">' + __("Total Cost") + '</th></tr></thead><tbody>';
-		rows.forEach((row) => {
-			const invoiceLinks = (row.purchase_invoices || []).map((name) => {
-				return frappe.utils.get_form_link("Purchase Invoice", name, true);
-			}).join("<br>");
-			const journalLinks = (row.journal_entries || []).map((name) => {
-				return frappe.utils.get_form_link("Journal Entry", name, true);
-			}).join("<br>");
-			html += '<tr><td>' + displayValue(row.project_identifier) + '</td><td>' + displayValue(row.activity_type) + '</td><td class="doc-link">' + invoiceLinks + '</td><td class="doc-link">' + journalLinks + '</td><td class="text-right">' + fmt(row.purchase_invoice_cost) + '</td><td class="text-right">' + fmt(row.journal_entry_cost) + '</td><td class="text-right">' + fmt(row.total_cost) + '</td></tr>';
+
+		const buildInvoiceDetails = (details) => {
+			if (!details || !details.length) {
+				return '<p class="text-muted mb-0">' + __("No purchase invoice values for this group.") + '</p>';
+			}
+			let detailHtml = '<div class="identifier-activity-detail-title">' + __("Purchase Invoice Values") + '</div>';
+			detailHtml += '<div class="table-responsive"><table class="summary-table identifier-activity-detail-table"><thead><tr><th>' + __("Purchase Invoice") + '</th><th>' + __("Posting Date") + '</th><th>' + __("Supplier") + '</th><th>' + __("Item") + '</th><th class="text-right">' + __("Qty") + '</th><th class="text-right">' + __("Net Amount") + '</th><th class="text-right">' + __("Total Cost (Incl. VAT)") + '</th></tr></thead><tbody>';
+			let totalNet = 0;
+			let totalWithVat = 0;
+			details.forEach((detail) => {
+				const piLink = detail.purchase_invoice ? frappe.utils.get_form_link("Purchase Invoice", detail.purchase_invoice, true) : "";
+				totalNet += flt(detail.net_amount, 2);
+				totalWithVat += flt(detail.amount_with_vat, 2);
+				detailHtml += '<tr><td class="doc-link">' + piLink + '</td><td>' + escapeHtml(detail.posting_date) + '</td><td>' + escapeHtml(detail.supplier_name || detail.supplier) + '</td><td>' + escapeHtml(detail.item_name || detail.item_code) + '</td><td class="text-right">' + flt(detail.qty, 2) + '</td><td class="text-right">' + fmt(detail.net_amount) + '</td><td class="text-right">' + fmt(detail.amount_with_vat) + '</td></tr>';
+			});
+			detailHtml += '<tr class="total-row"><td colspan="5"><strong>' + __("Total") + '</strong></td><td class="text-right">' + fmt(totalNet) + '</td><td class="text-right">' + fmt(totalWithVat) + '</td></tr>';
+			detailHtml += '</tbody></table></div>';
+			return detailHtml;
+		};
+
+		const buildJournalEntryDetails = (details) => {
+			if (!details || !details.length) {
+				return '<p class="text-muted mb-0">' + __("No journal entry values for this group.") + '</p>';
+			}
+			let detailHtml = '<div class="identifier-activity-detail-title">' + __("Journal Entry Values") + '</div>';
+			detailHtml += '<div class="table-responsive"><table class="summary-table identifier-activity-detail-table"><thead><tr><th>' + __("Journal Entry") + '</th><th>' + __("Posting Date") + '</th><th>' + __("Account") + '</th><th>' + __("Remarks") + '</th><th class="text-right">' + __("Amount") + '</th></tr></thead><tbody>';
+			let totalAmount = 0;
+			details.forEach((detail) => {
+				const jeLink = detail.journal_entry ? frappe.utils.get_form_link("Journal Entry", detail.journal_entry, true) : "";
+				totalAmount += flt(detail.amount, 2);
+				detailHtml += '<tr><td class="doc-link">' + jeLink + '</td><td>' + escapeHtml(detail.posting_date) + '</td><td>' + escapeHtml(detail.account) + '</td><td>' + escapeHtml(detail.user_remark) + '</td><td class="text-right">' + fmt(detail.amount) + '</td></tr>';
+			});
+			detailHtml += '<tr class="total-row"><td colspan="4"><strong>' + __("Total") + '</strong></td><td class="text-right">' + fmt(totalAmount) + '</td></tr>';
+			detailHtml += '</tbody></table></div>';
+			return detailHtml;
+		};
+
+		const buildSummaryMatrix = () => {
+			const activityTypes = [];
+			const projectIdentifiers = [];
+			const matrix = {};
+			const rowTotals = {};
+			const columnTotals = {};
+			rows.forEach((row) => {
+				const projectIdentifier = row.project_identifier || __("Not Set");
+				const activityType = row.activity_type || __("Not Set");
+				const amount = flt(row.total_cost, 2);
+				if (!projectIdentifiers.includes(projectIdentifier)) projectIdentifiers.push(projectIdentifier);
+				if (!activityTypes.includes(activityType)) activityTypes.push(activityType);
+				if (!matrix[projectIdentifier]) matrix[projectIdentifier] = {};
+				matrix[projectIdentifier][activityType] = flt(matrix[projectIdentifier][activityType] || 0, 2) + amount;
+				rowTotals[projectIdentifier] = flt(rowTotals[projectIdentifier] || 0, 2) + amount;
+				columnTotals[activityType] = flt(columnTotals[activityType] || 0, 2) + amount;
+			});
+			projectIdentifiers.sort();
+			activityTypes.sort();
+
+			let summaryHtml = '<div class="identifier-activity-detail-title">' + __("Summary") + '</div>';
+			summaryHtml += '<div class="table-responsive"><table class="summary-table project-activity-matrix"><thead>';
+			summaryHtml += '<tr><th></th><th class="text-center" colspan="' + (activityTypes.length + 1) + '">' + __("Activity Type") + '</th></tr>';
+			summaryHtml += '<tr><th>' + __("Project Identifier") + '</th>';
+			activityTypes.forEach((activityType) => {
+				summaryHtml += '<th class="text-right">' + displayValue(activityType) + '</th>';
+			});
+			summaryHtml += '<th class="text-right">' + __("Total") + '</th></tr></thead><tbody>';
+			projectIdentifiers.forEach((projectIdentifier) => {
+				summaryHtml += '<tr><td>' + displayValue(projectIdentifier) + '</td>';
+				activityTypes.forEach((activityType) => {
+					const amount = flt((matrix[projectIdentifier] || {})[activityType], 2);
+					summaryHtml += '<td class="text-right">' + (amount ? fmt(amount) : "") + '</td>';
+				});
+				summaryHtml += '<td class="text-right">' + fmt(rowTotals[projectIdentifier]) + '</td></tr>';
+			});
+			summaryHtml += '<tr class="total-row"><td><strong>' + __("Grand Total") + '</strong></td>';
+			activityTypes.forEach((activityType) => {
+				summaryHtml += '<td class="text-right">' + fmt(columnTotals[activityType]) + '</td>';
+			});
+			summaryHtml += '<td class="text-right">' + fmt(totals.total_cost) + '</td></tr>';
+			summaryHtml += '</tbody></table></div>';
+			return summaryHtml;
+		};
+
+		content.append($(buildSummaryMatrix()));
+		content.append($(`
+			<div class="identifier-activity-table-toggle" data-expanded="true">
+				<span class="toggle-icon">▲</span> ${__("Cost Details")}
+			</div>
+		`));
+
+		let html = '<div class="identifier-activity-table-content"><div class="table-responsive"><table class="summary-table identifier-activity-summary"><thead><tr><th></th><th>' + __("Project Identifier") + '</th><th>' + __("Activity Type") + '</th><th class="text-right">' + __("Purchase Invoice Cost") + '</th><th class="text-right">' + __("Journal Entry Cost") + '</th><th class="text-right">' + __("Total Cost") + '</th></tr></thead><tbody>';
+		rows.forEach((row, index) => {
+			const detailId = "identifier-activity-detail-" + index;
+			html += '<tr class="identifier-activity-toggle-row" data-target="' + detailId + '" data-expanded="false">';
+			html += '<td class="text-center"><span class="toggle-icon">▼</span></td>';
+			html += '<td>' + displayValue(row.project_identifier) + '</td>';
+			html += '<td>' + displayValue(row.activity_type) + '</td>';
+			html += '<td class="text-right">' + fmt(row.purchase_invoice_cost) + '</td>';
+			html += '<td class="text-right">' + fmt(row.journal_entry_cost) + '</td>';
+			html += '<td class="text-right">' + fmt(row.total_cost) + '</td>';
+			html += '</tr>';
+			html += '<tr class="identifier-activity-detail-row" id="' + detailId + '" style="display:none"><td colspan="6"><div class="identifier-activity-detail-grid">';
+			if (flt(row.purchase_invoice_cost, 2)) {
+				html += buildInvoiceDetails(row.purchase_invoice_details || []);
+			}
+			if (flt(row.journal_entry_cost, 2)) {
+				html += buildJournalEntryDetails(row.journal_entry_details || []);
+			}
+			if (!flt(row.purchase_invoice_cost, 2) && !flt(row.journal_entry_cost, 2)) {
+				html += '<p class="text-muted mb-0">' + __("No detail values found for this group.") + '</p>';
+			}
+			html += '</div></td></tr>';
 		});
-		html += '<tr class="total-row"><td colspan="4"><strong>' + __("Grand Total") + '</strong></td><td class="text-right">' + fmt(totals.purchase_invoice_cost) + '</td><td class="text-right">' + fmt(totals.journal_entry_cost) + '</td><td class="text-right">' + fmt(totals.total_cost) + '</td></tr>';
-		html += "</tbody></table></div>";
-		section.append($(html));
+		html += '<tr class="total-row"><td colspan="3"><strong>' + __("Grand Total") + '</strong></td><td class="text-right">' + fmt(totals.purchase_invoice_cost) + '</td><td class="text-right">' + fmt(totals.journal_entry_cost) + '</td><td class="text-right">' + fmt(totals.total_cost) + '</td></tr>';
+		html += "</tbody></table></div></div>";
+		content.append($(html));
+
+		content.find(".identifier-activity-table-toggle").on("click", function() {
+			const $toggle = $(this);
+			const expanded = $toggle.attr("data-expanded") === "true";
+			$toggle.attr("data-expanded", expanded ? "false" : "true");
+			$toggle.find(".toggle-icon").text(expanded ? "▼" : "▲");
+			content.find(".identifier-activity-table-content").toggleClass("collapse", expanded);
+		});
+
+		section.find(".identifier-activity-section-toggle").on("click", function() {
+			const $toggle = $(this);
+			const expanded = $toggle.attr("data-expanded") === "true";
+			$toggle.attr("data-expanded", expanded ? "false" : "true");
+			$toggle.find(".toggle-icon").text(expanded ? "▼" : "▲");
+			content.toggleClass("collapse", expanded);
+		});
+
+		content.find(".identifier-activity-toggle-row").on("click", function() {
+			const $row = $(this);
+			const target = $row.attr("data-target");
+			const expanded = $row.attr("data-expanded") === "true";
+			$row.attr("data-expanded", expanded ? "false" : "true");
+			$row.find(".toggle-icon").text(expanded ? "▼" : "▲");
+			content.find("#" + target).toggle(!expanded);
+		});
 		return section;
 	},
 

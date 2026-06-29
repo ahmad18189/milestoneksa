@@ -1,0 +1,375 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-06-23 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee_section",
+  "employee",
+  "employee_name",
+  "department",
+  "designation",
+  "company",
+  "column_break_emp",
+  "status",
+  "separation_reason",
+  "alert_date",
+  "contract_section",
+  "date_of_joining",
+  "contract_end_date",
+  "days_to_expiry",
+  "column_break_contract",
+  "notification_sent",
+  "notification_sent_on",
+  "last_reminder_sent_on",
+  "auto_renew_notice_sent",
+  "auto_renew_notice_sent_on",
+  "extend_section",
+  "previous_contract_end_date",
+  "new_contract_end_date",
+  "extended_on",
+  "extended_by",
+  "end_section",
+  "ended_on",
+  "ended_by",
+  "eos_section",
+  "last_actual_wage",
+  "years_of_service",
+  "article_84_full_amount",
+  "article_85_factor",
+  "unpaid_leave_days",
+  "final_eos_amount",
+  "eos_calculation_notes"
+ ],
+ "fields": [
+  {
+   "default": "ECER-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "ECER-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_section",
+   "fieldtype": "Section Break",
+   "label": "Employee Details"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.department",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.designation",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_emp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending Review",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Pending Review\nExtended\nEnd Contract\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "Contract Expiry",
+   "fieldname": "separation_reason",
+   "fieldtype": "Select",
+   "label": "Separation Reason",
+   "options": "Contract Expiry\nResignation\nEmployer Termination"
+  },
+  {
+   "default": "Today",
+   "fieldname": "alert_date",
+   "fieldtype": "Date",
+   "label": "Alert Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_section",
+   "fieldtype": "Section Break",
+   "label": "Contract Details"
+  },
+  {
+   "fetch_from": "employee.date_of_joining",
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Date of Joining",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Contract End Date",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "days_to_expiry",
+   "fieldtype": "Int",
+   "label": "Days to Expiry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_contract",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "notification_sent",
+   "fieldtype": "Check",
+   "label": "Notification Sent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notification_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Notification Sent On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_reminder_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Last Reminder Sent On",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_renew_notice_sent",
+   "fieldtype": "Check",
+   "label": "Auto Renew Notice Sent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "auto_renew_notice_sent_on",
+   "fieldtype": "Datetime",
+   "label": "Auto Renew Notice Sent On",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "extend_section",
+   "fieldtype": "Section Break",
+   "label": "Extension Details"
+  },
+  {
+   "fieldname": "previous_contract_end_date",
+   "fieldtype": "Date",
+   "label": "Previous Contract End Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_contract_end_date",
+   "fieldtype": "Date",
+   "label": "New Contract End Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "extended_on",
+   "fieldtype": "Datetime",
+   "label": "Extended On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "extended_by",
+   "fieldtype": "Link",
+   "label": "Extended By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "end_section",
+   "fieldtype": "Section Break",
+   "label": "End Contract Details"
+  },
+  {
+   "fieldname": "ended_on",
+   "fieldtype": "Datetime",
+   "label": "Ended On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ended_by",
+   "fieldtype": "Link",
+   "label": "Ended By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "eos_section",
+   "fieldtype": "Section Break",
+   "label": "KSA End of Service"
+  },
+  {
+   "fieldname": "last_actual_wage",
+   "fieldtype": "Currency",
+   "label": "Last Actual Wage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "years_of_service",
+   "fieldtype": "Float",
+   "label": "Years of Service",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "article_84_full_amount",
+   "fieldtype": "Currency",
+   "label": "Article 84 Full Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "article_85_factor",
+   "fieldtype": "Float",
+   "label": "Article 85 Factor",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unpaid_leave_days",
+   "fieldtype": "Int",
+   "label": "Unpaid Leave Days"
+  },
+  {
+   "fieldname": "final_eos_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Final EOS Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eos_calculation_notes",
+   "fieldtype": "Small Text",
+   "label": "EOS Calculation Notes",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-23 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Employee Contract End Review",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "COO",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "CEO",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "CFO",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

@@ -42,6 +42,10 @@
 		document.querySelectorAll("textarea").forEach((textarea) => {
 			const composer = textarea.closest(".flex.items-end.gap-2");
 			composer?.classList.add("milestone-wa-composer");
+
+			const inputWrapper = textarea.parentElement;
+			inputWrapper?.classList.add("milestone-wa-input-wrap");
+			textarea.classList.add("milestone-wa-input");
 		});
 	}
 

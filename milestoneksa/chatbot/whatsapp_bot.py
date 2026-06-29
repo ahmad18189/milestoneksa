@@ -90,10 +90,20 @@ PROJECT_SERVICE_KEYWORDS = {
 
 TEXT_ONLY_TEMPLATE_NAMES = {"milestone_project_intro_text"}
 INTRO_TEMPLATE_NAME = "milestone_project_intro"
+CHATBOT_TEMPLATE_NAMES = TEXT_ONLY_TEMPLATE_NAMES | {INTRO_TEMPLATE_NAME}
+DEFAULT_CUSTOMER_NAME = "عميلنا الكريم"
+CHATBOT_TEMPLATE_FIELD_NAMES = "lead_name"
+CHATBOT_TEMPLATE_FOR_DOCTYPE = "CRM Lead"
 
 
 def validate_chatbot_whatsapp_template(doc, method=None):
 	"""Prevent Desk edits that Meta will reject for chatbot templates."""
+	if doc.template_name in CHATBOT_TEMPLATE_NAMES:
+		if not doc.field_names:
+			doc.field_names = CHATBOT_TEMPLATE_FIELD_NAMES
+		if not doc.for_doctype:
+			doc.for_doctype = CHATBOT_TEMPLATE_FOR_DOCTYPE
+
 	if doc.template_name in TEXT_ONLY_TEMPLATE_NAMES and doc.buttons:
 		frappe.throw(
 			_(
@@ -141,6 +151,53 @@ def crm_is_whatsapp_installed():
 	)
 
 
+@frappe.whitelist()
+def crm_get_whatsapp_messages(reference_doctype: str, reference_name: str):
+	"""Add Milestone list-message metadata for legacy interactive messages."""
+	from crm.api.whatsapp import get_whatsapp_messages
+
+	messages = get_whatsapp_messages(reference_doctype, reference_name)
+	for message in messages:
+		_enrich_legacy_interactive_list(message)
+		_format_interactive_for_display(message)
+	return messages
+
+
+def _enrich_legacy_interactive_list(message: dict):
+	if message.get("content_type") != "interactive":
+		return
+	if message.get("interactive_type") != "list":
+		return
+	if not message.get("header"):
+		message["header"] = LIST_HEADER
+	if not message.get("list_button"):
+		message["list_button"] = LIST_BUTTON_TEXT
+
+
+def _format_interactive_for_display(message: dict):
+	"""Render interactive payloads as text until CRM frontend build includes list UI."""
+	if message.get("content_type") != "interactive":
+		return
+
+	parts = []
+	if message.get("header"):
+		parts.append(f"*{message['header']}*")
+	if message.get("message"):
+		parts.append(message["message"])
+
+	if message.get("interactive_type") == "list" and message.get("list_button"):
+		parts.append(f"📋 {message['list_button']}")
+	elif message.get("interactive_buttons"):
+		for button in message["interactive_buttons"]:
+			title = button.get("title")
+			if title:
+				parts.append(f"• {title}")
+
+	if parts:
+		message["message"] = "\n\n".join(parts)
+		message["content_type"] = "text"
+
+
 def link_whatsapp_message_to_crm(doc, method=None):
 	"""Attach WhatsApp Message to the matching CRM Lead so CRM history is visible."""
 	if doc.doctype != "WhatsApp Message":
@@ -163,6 +220,38 @@ def link_whatsapp_message_to_crm(doc, method=None):
 
 	if doc.type == "Outgoing" and not getattr(frappe.flags, CHATBOT_FLAG, False):
 		_mark_human_handoff(phone, doc.reference_name)
+
+
+def prepare_chatbot_template_body_param(doc, method=None):
+	"""Fill {{1}} from the CRM Lead before Meta rejects an empty template parameter."""
+	if doc.doctype != "WhatsApp Message":
+		return
+	if doc.type != "Outgoing" or doc.message_type != "Template" or doc.body_param:
+		return
+	if not doc.template:
+		return
+
+	template_name = frappe.db.get_value("WhatsApp Templates", doc.template, "template_name")
+	if template_name not in CHATBOT_TEMPLATE_NAMES:
+		return
+
+	customer_name = DEFAULT_CUSTOMER_NAME
+	if doc.reference_doctype and doc.reference_name:
+		customer_name = _get_customer_name_from_reference(
+			doc.reference_doctype,
+			doc.reference_name,
+		)
+
+	doc.body_param = json.dumps({"1": customer_name}, ensure_ascii=False)
+
+
+def _get_customer_name_from_reference(reference_doctype: str, reference_name: str) -> str:
+	ref_doc = frappe.get_doc(reference_doctype, reference_name)
+	for field_name in (CHATBOT_TEMPLATE_FIELD_NAMES, "first_name", "full_name"):
+		value = (ref_doc.get(field_name) or "").strip()
+		if value:
+			return value
+	return DEFAULT_CUSTOMER_NAME
 
 
 def handle_whatsapp_message(doc, method=None):
@@ -522,7 +611,15 @@ def _send_interactive_project_list(phone: str, projects: list[dict]) -> bool:
 			message=PROJECT_LIST_INTRO,
 			content_type="interactive",
 			message_id=response.get("messages", [{}])[0].get("id"),
-			buttons=json.dumps(rows, ensure_ascii=False),
+			buttons=json.dumps(
+				{
+					"interactive_type": "list",
+					"header": LIST_HEADER,
+					"list_button": LIST_BUTTON_TEXT,
+					"rows": rows,
+				},
+				ensure_ascii=False,
+			),
 			status="Success",
 		)
 		return True
@@ -907,7 +1004,9 @@ def _create_whatsapp_template(template_def: dict) -> dict:
 			"category": template_def["category"],
 			"language": template_def.get("language", "ar"),
 			"language_code": language_code,
-			"sample_values": template_def.get("sample_values", ""),
+			"sample_values": template_def.get("sample_values", DEFAULT_CUSTOMER_NAME),
+			"field_names": template_def.get("field_names", CHATBOT_TEMPLATE_FIELD_NAMES),
+			"for_doctype": template_def.get("for_doctype", CHATBOT_TEMPLATE_FOR_DOCTYPE),
 			"whatsapp_account": whatsapp_account,
 		}
 	)

@@ -31,7 +31,7 @@ app_include_css = [
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.css",
     "/assets/milestoneksa/css/quick_checkin.css",
     "/assets/milestoneksa/css/font.css",
-    "/assets/milestoneksa/css/announcement_popup.css",
+    "/assets/milestoneksa/css/announcement_popup.css?v=3",
     "/assets/milestoneksa/css/project_task_tab.css?v=50",
     "/assets/milestoneksa/css/lib/tabulator.min.css",
 ]

@@ -1,23 +1,36 @@
 /* Desk Announcement modal – Payment Approval Request (compact) */
 
 .modal.desk-announcement--payment-approval .modal-dialog {
-	max-width: 480px;
+	max-width: 520px;
+	margin: 1.75rem auto;
 }
 
 .modal.desk-announcement--payment-approval .modal-content {
 	border-radius: 12px;
 	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 	border: none;
-	overflow: hidden;
+	overflow: visible;
 }
 
 .modal.desk-announcement--payment-approval .modal-header {
-	border-bottom: none;
-	padding-bottom: 0;
+	border-bottom: 1px solid #eef2f7;
+	padding: 14px 16px 10px;
+}
+
+.modal.desk-announcement--payment-approval .modal-title {
+	font-size: 15px;
+	font-weight: 600;
 }
 
 .modal.desk-announcement--payment-approval .modal-body {
-	padding: 0 16px 16px;
+	padding: 12px 16px 8px;
+	max-height: min(70vh, 560px);
+	overflow-y: auto;
+}
+
+.modal.desk-announcement--payment-approval .modal-footer {
+	border-top: 1px solid #eef2f7;
+	padding: 10px 16px 14px;
 }
 
 /* Fit content: no extra margin or padding on wrapper */
@@ -30,14 +43,16 @@
 	margin: 0 !important;
 	padding: 0 !important;
 	min-height: 0 !important;
+	height: auto !important;
 	border: none !important;
+	overflow: visible !important;
 }
 
 /* Compact announcement content – link is on the announcement (Open Link), not in body */
 .modal.desk-announcement--payment-approval .par-announcement {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 	font-size: 12px;
-	line-height: 1.4;
+	line-height: 1.45;
 	color: #2c3e50;
 	margin: 0;
 	padding: 0;
@@ -112,20 +127,75 @@
 	padding: 4px 0;
 	color: #1e293b;
 	font-size: 12px;
+	word-break: break-word;
 }
 
-/* Legacy amount with currency img: hide the img so only the number shows (new announcements use plain text e.g. "3,123.00 SAR") */
-.par-announcement__value img {
+/* Legacy amount with currency img: hide the img so only the number shows */
+.par-announcement__value img,
+.modal.desk-announcement--payment-approval img[src*="Riyal_Symbol"] {
 	display: none !important;
 }
 
 /* Remove legacy in-content CTA; link is on the announcement (Open Link) only */
 .modal.desk-announcement--payment-approval .par-announcement__actions,
-.par-announcement__actions {
+.par-announcement__actions,
+.modal.desk-announcement--payment-approval a[href*="payment-approval-request"],
+.modal.desk-announcement--payment-approval .par-announcement-legacy-cta {
 	display: none !important;
 	visibility: hidden !important;
 	height: 0 !important;
 	overflow: hidden !important;
 	margin: 0 !important;
 	padding: 0 !important;
+}
+
+/* Legacy markup fallback (old announcements without par-announcement) */
+.modal.desk-announcement--payment-approval .par-announcement-legacy h3,
+.modal.desk-announcement--payment-approval .ql-editor > div > h3 {
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0 0 6px;
+	color: #1e293b;
+}
+
+.modal.desk-announcement--payment-approval .par-announcement-legacy > p,
+.modal.desk-announcement--payment-approval .ql-editor > div > p {
+	margin: 0 0 8px;
+	font-size: 12px;
+	color: #475569;
+}
+
+.modal.desk-announcement--payment-approval .par-announcement-legacy hr,
+.modal.desk-announcement--payment-approval .ql-editor > div > hr {
+	margin: 8px 0;
+	border: 0;
+	border-top: 1px solid #e2e8f0;
+}
+
+.modal.desk-announcement--payment-approval .par-announcement-legacy table,
+.modal.desk-announcement--payment-approval .ql-editor table {
+	width: 100% !important;
+	border-collapse: collapse;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	font-size: 12px;
+}
+
+.modal.desk-announcement--payment-approval .par-announcement-legacy td,
+.modal.desk-announcement--payment-approval .ql-editor table td {
+	padding: 6px 10px !important;
+	vertical-align: top;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.modal.desk-announcement--payment-approval .par-announcement-legacy tr:last-child td,
+.modal.desk-announcement--payment-approval .ql-editor table tr:last-child td {
+	border-bottom: none;
+}
+
+.modal.desk-announcement--payment-approval .dont-show-again,
+.modal.desk-announcement--payment-approval [data-fieldname="dont_show"] {
+	margin-top: 10px;
+	font-size: 12px;
 }

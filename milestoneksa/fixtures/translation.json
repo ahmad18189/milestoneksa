@@ -297,5 +297,44 @@
   "name": "lsvedj7v68",
   "source_text": "ID Date Of Expiration",
   "translated_text": "تاريخ انتهاء الهوية الوطنية"
+ },
+ {
+  "context": "",
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2026-08-26 09:55:00.000000",
+  "name": "2699v39gkd",
+  "source_text": "Request for Quotation",
+  "translated_text": "طلب عرض أسعار"
+ },
+ {
+  "context": "",
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2026-08-26 09:55:00.000000",
+  "name": "26a5o9pcmb",
+  "source_text": "Request for Quotations",
+  "translated_text": "طلبات عروض الأسعار"
+ },
+ {
+  "context": "",
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2026-08-26 10:00:00.000000",
+  "name": "656qsp7dc6",
+  "source_text": "Supplier Quotation",
+  "translated_text": "عرض أسعار المورد"
  }
 ]

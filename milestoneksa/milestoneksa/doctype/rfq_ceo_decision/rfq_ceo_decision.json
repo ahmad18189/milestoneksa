@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "creation": "2026-08-26 10:10:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "supplier_quotation",
+  "supplier",
+  "supplier_name",
+  "grand_total",
+  "currency",
+  "column_break_1",
+  "recommended_quotation",
+  "decision",
+  "ceo_user",
+  "decided_by",
+  "decided_on",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "supplier_quotation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier Quotation",
+   "options": "Supplier Quotation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "supplier.supplier_name",
+   "fieldname": "supplier_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Supplier Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Grand Total",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "recommended_quotation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Recommended Quotation",
+   "options": "Supplier Quotation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Decision",
+   "options": "Approved\nRejected",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "ceo_user",
+   "fieldtype": "Link",
+   "label": "CEO User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Decided By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Decided On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-08-26 10:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "RFQ CEO Decision",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

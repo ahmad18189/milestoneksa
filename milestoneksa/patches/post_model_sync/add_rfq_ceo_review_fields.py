@@ -1,0 +1,121 @@
+import frappe
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+
+
+def execute():
+	create_custom_fields(
+		{
+			"Request for Quotation": [
+				{
+					"fieldname": "custom_ceo_review_tab",
+					"label": "CEO Review",
+					"fieldtype": "Tab Break",
+					"insert_after": "items",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_ceo_review_status",
+					"label": "CEO Review Status",
+					"fieldtype": "Select",
+					"options": "Not Sent\nPending CEO Review\nApproved\nRejected",
+					"default": "Not Sent",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"in_list_view": 1,
+					"in_standard_filter": 1,
+					"insert_after": "custom_ceo_review_tab",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_ceo_reviewer",
+					"label": "CEO Reviewer",
+					"fieldtype": "Link",
+					"options": "User",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"insert_after": "custom_ceo_review_status",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_ceo_sent_on",
+					"label": "Sent to CEO On",
+					"fieldtype": "Datetime",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"insert_after": "custom_ceo_reviewer",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_ceo_review_col_break",
+					"fieldtype": "Column Break",
+					"insert_after": "custom_ceo_sent_on",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_winning_supplier_quotation",
+					"label": "Winning Supplier Quotation",
+					"fieldtype": "Link",
+					"options": "Supplier Quotation",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"insert_after": "custom_ceo_review_col_break",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_winning_supplier",
+					"label": "Winning Supplier",
+					"fieldtype": "Link",
+					"options": "Supplier",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"insert_after": "custom_winning_supplier_quotation",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_ceo_decided_on",
+					"label": "CEO Decided On",
+					"fieldtype": "Datetime",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"insert_after": "custom_winning_supplier",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_sq_comparison_section",
+					"label": "Supplier Quotation Comparison",
+					"fieldtype": "Section Break",
+					"insert_after": "custom_ceo_decided_on",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_sq_comparison_html",
+					"label": "Comparison",
+					"fieldtype": "HTML",
+					"options": "<div class='rfq-ceo-comparison'></div>",
+					"insert_after": "custom_sq_comparison_section",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_ceo_decisions_section",
+					"label": "CEO Decisions",
+					"fieldtype": "Section Break",
+					"collapsible": 1,
+					"insert_after": "custom_sq_comparison_html",
+					"module": "Milestoneksa",
+				},
+				{
+					"fieldname": "custom_ceo_decisions",
+					"label": "CEO Decisions",
+					"fieldtype": "Table",
+					"options": "RFQ CEO Decision",
+					"read_only": 1,
+					"allow_on_submit": 1,
+					"insert_after": "custom_ceo_decisions_section",
+					"module": "Milestoneksa",
+				},
+			]
+		},
+		ignore_validate=True,
+		update=True,
+	)
+	frappe.clear_cache(doctype="Request for Quotation")

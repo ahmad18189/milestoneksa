@@ -130,6 +130,11 @@
 			if (isPaymentApproval) {
 				message = normalizePaymentApprovalMessage(message);
 			}
+			// Always strip legacy CTA from stored HTML (including href="{link}")
+			message = message
+				.replace(/<p[^>]*>\s*<a[^>]*>\s*View\s*(?:&amp;|&)\s*Take\s*Action\s*<\/a>\s*<\/p>/gi, "")
+				.replace(/<a[^>]*>\s*View\s*(?:&amp;|&)\s*Take\s*Action\s*<\/a>/gi, "")
+				.replace(/<hr\s*\/?>\s*$/gi, "");
 			d.get_field("msg_html").$wrapper.html(`<div class="ql-editor">${message}</div>`);
 
 			if (it.show_policy === "Once") {
@@ -138,10 +143,20 @@
 
 			if (isPaymentApproval && d.$wrapper) {
 				d.$wrapper.addClass("desk-announcement--payment-approval");
-				d.$wrapper.find(".par-announcement__actions").remove();
-				d.$wrapper.find("a").filter(function () {
-					return /view\s*&\s*take\s*action/i.test($(this).text());
-				}).closest("p").addBack().remove();
+				const stripCta = () => {
+					d.$wrapper.find(".par-announcement__actions").remove();
+					d.$wrapper.find("a").each(function () {
+						const $a = $(this);
+						const text = ($a.text() || "").replace(/\s+/g, " ").trim();
+						if (/^view\s*&\s*take\s*action$/i.test(text) || ($a.attr("href") || "").indexOf("{link}") !== -1) {
+							const $p = $a.closest("p");
+							($p.length ? $p : $a).remove();
+						}
+					});
+				};
+				stripCta();
+				d.$wrapper.on("shown.bs.modal", stripCta);
+				setTimeout(stripCta, 0);
 			}
 
 			d.show();

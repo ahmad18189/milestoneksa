@@ -26,9 +26,10 @@ MONITORED_USERS = [
 def get_last_task_alteration(user: str) -> dict | None:
 	row = frappe.db.sql(
 		"""
-		SELECT v.creation, v.docname, t.subject
+		SELECT v.creation, v.docname, t.subject, t.project, p.project_name
 		FROM `tabVersion` v
 		INNER JOIN `tabTask` t ON t.name = v.docname
+		LEFT JOIN `tabProject` p ON p.name = t.project
 		WHERE v.ref_doctype = 'Task' AND v.owner = %s
 		ORDER BY v.creation DESC
 		LIMIT 1
@@ -37,6 +38,75 @@ def get_last_task_alteration(user: str) -> dict | None:
 		as_dict=True,
 	)
 	return row[0] if row else None
+
+
+def get_user_projects(user: str) -> list[dict]:
+	"""Projects linked to the user's open tasks or recent task updates."""
+	rows = frappe.db.sql(
+		"""
+		SELECT DISTINCT t.project, p.project_name
+		FROM `tabTask` t
+		LEFT JOIN `tabProject` p ON p.name = t.project
+		WHERE t.project IS NOT NULL AND t.project != ''
+			AND (
+				t._assign LIKE %s
+				OR EXISTS (
+					SELECT 1 FROM `tabVersion` v
+					WHERE v.ref_doctype = 'Task' AND v.docname = t.name AND v.owner = %s
+				)
+			)
+			AND t.status NOT IN ('Completed', 'Cancelled')
+		ORDER BY p.project_name, t.project
+		""",
+		(f"%{user}%", user),
+		as_dict=True,
+	)
+	if rows:
+		return rows
+
+	return frappe.db.sql(
+		"""
+		SELECT DISTINCT t.project, p.project_name
+		FROM `tabVersion` v
+		INNER JOIN `tabTask` t ON t.name = v.docname
+		LEFT JOIN `tabProject` p ON p.name = t.project
+		WHERE v.ref_doctype = 'Task' AND v.owner = %s
+			AND t.project IS NOT NULL AND t.project != ''
+		ORDER BY v.creation DESC
+		LIMIT 5
+		""",
+		user,
+		as_dict=True,
+	)
+
+
+def format_project_list(projects: list[dict]) -> str:
+	if not projects:
+		return "—"
+	parts = []
+	for row in projects:
+		name = row.project_name or row.project
+		parts.append(f"{row.project} — {name}" if row.project_name else row.project)
+	return " | ".join(parts)
+
+
+def has_task_action_on_date(user: str, check_date=None) -> bool:
+	"""True if the user created or altered any Task on the given date."""
+	check_date = getdate(check_date or today())
+	return bool(
+		frappe.db.sql(
+			"""
+			SELECT 1
+			FROM `tabVersion` v
+			INNER JOIN `tabTask` t ON t.name = v.docname
+			WHERE v.ref_doctype = 'Task'
+				AND v.owner = %s
+				AND DATE(v.creation) = %s
+			LIMIT 1
+			""",
+			(user, check_date),
+		)
+	)
 
 
 def get_employee_for_user(user: str) -> dict | None:
@@ -398,3 +468,249 @@ def get_report_summary(user="a.alhaj@milestoneksa.com"):
 		"last_task": f"{data['last_task_id']} | {data['last_task_subject']}",
 		"existing_additional_salary": existing,
 	}
+
+
+FORMAL_WARNING_TEMPLATE = "Project User Formal Warning - AR"
+
+
+def build_formal_warning_context(
+	user: str = "a.alhaj@milestoneksa.com",
+	*,
+	daily_check: bool = False,
+	check_date=None,
+) -> dict:
+	last = get_last_task_alteration(user)
+	employee = get_employee_for_user(user)
+	if not employee:
+		frappe.throw(f"No active employee linked to user {user}")
+
+	report_date = getdate(check_date or today())
+	last_dt = last.creation if last else None
+	days_inactive = (report_date - getdate(last_dt)).days if last_dt else None
+	projects = get_user_projects(user)
+	emp_suffix = employee.name.split("-")[-1]
+	reference_no = (
+		f"HR-WARN-{report_date.strftime('%Y%m%d')}-{emp_suffix}"
+		if daily_check
+		else f"HR-WARN-{report_date.strftime('%Y%m')}-{emp_suffix}"
+	)
+
+	return {
+		"user": user,
+		"employee": employee,
+		"last_alteration": last_dt,
+		"last_task_id": last.docname if last else "",
+		"last_task_subject": (last.subject or "") if last else "",
+		"last_project": (last.project or "") if last else "",
+		"last_project_name": (last.project_name or last.project or "") if last else "",
+		"projects": projects,
+		"project_list_text": format_project_list(projects),
+		"days_inactive": days_inactive,
+		"report_date": report_date,
+		"daily_check": daily_check,
+		"no_action_today": daily_check and not has_task_action_on_date(user, report_date),
+		"reference_no": reference_no,
+	}
+
+
+def build_formal_warning_subject(data: dict) -> str:
+	emp = data["employee"]
+	if data.get("daily_check"):
+		return (
+			f"إنذار نظامي — عدم تحديث مهام اليوم ({format_datetime(data['report_date'], 'dd/MM/yyyy')}) — "
+			f"{emp.employee_name} ({emp.name})"
+		)
+	return f"إنذار نظامي — عدم تحديث مهام المشروع — {emp.employee_name} ({emp.name})"
+
+
+def build_formal_warning_html(data: dict) -> str:
+	emp = data["employee"]
+	days_text = f"<strong>{data['days_inactive']} يوم</strong>" if data["days_inactive"] is not None else "غير محدد"
+	project_list = data.get("project_list_text") or "—"
+	last_project_text = data.get("last_project_name") or data.get("last_project") or "—"
+	if data.get("last_project") and data.get("last_project_name"):
+		last_project_text = f"{data['last_project']} — {data['last_project_name']}"
+
+	project_rows = f"""
+<tr><td>المشروع / المشاريع</td><td><strong>{project_list}</strong></td></tr>
+"""
+	last_task_row = ""
+	if data.get("last_task_id"):
+		last_task_row = f"""
+<tr><td>آخر مهمة تم تعديلها</td><td>{data['last_task_id']} — {data['last_task_subject']}</td></tr>
+<tr><td>مشروع آخر مهمة</td><td>{last_project_text}</td></tr>
+<tr><td>تاريخ آخر تعديل مسجّل</td><td>{_fmt_date(data['last_alteration'])}</td></tr>
+<tr><td>المدة منذ آخر تعديل</td><td>{days_text}</td></tr>
+"""
+	else:
+		last_task_row = "<tr><td colspan='2'>لا يوجد أي تعديل مسجّل على مهام المشروع في النظام.</td></tr>"
+
+	daily_row = ""
+	daily_intro = ""
+	if data.get("daily_check"):
+		daily_row = f"""
+<tr><td>تاريخ المتابعة</td><td>{format_datetime(data['report_date'], 'dd/MM/yyyy')}</td></tr>
+<tr><td>حالة اليوم (حتى 4:00 مساءً)</td><td><strong>لم يُسجّل أي إدخال أو تعديل على مهام المشروع</strong></td></tr>
+"""
+		daily_intro = f"""
+<p>
+نفيدكم بأنه حتى الساعة <strong>4:00 مساءً</strong> من تاريخ <strong>{format_datetime(data['report_date'], 'dd/MM/yyyy')}</strong>،
+تبيّن <strong>عدم قيامكم بأي إدخال أو تعديل على مهام المشروع</strong>
+(<strong>{project_list}</strong>) في نظام إدارة المشاريع،
+مما يُعد إخلالاً بواجباتكم الوظيفية وإجراءات العمل المعتمدة في الشركة.
+</p>
+"""
+	else:
+		daily_intro = f"""
+<p>
+نفيدكم بأنه وفق متابعة النظام الإلكتروني لمهام المشاريع
+(<strong>{project_list}</strong>)، تبيّن <strong>عدم قيامكم بتحديث أو تعديل مهام المشروع
+المسندة إليكم</strong> في نظام إدارة المشاريع بالشكل المطلوب، مما يُعد إخلالاً بواجباتكم الوظيفية
+وإجراءات العمل المعتمدة في الشركة.
+</p>
+"""
+
+	return f"""
+<div dir="rtl" style="font-family: 'Traditional Arabic', 'Arial', sans-serif; font-size: 15px; line-height: 1.9; color: #111;">
+<p style="text-align: center;"><strong>{emp.company or 'شركة مرحلة المشروع للتطوير العقاري'}</strong></p>
+<p style="text-align: center;">إدارة الموارد البشرية</p>
+<hr>
+<p><strong>الرقم المرجعي:</strong> {data['reference_no']}</p>
+<p><strong>التاريخ:</strong> {format_datetime(data['report_date'], 'dd/MM/yyyy')}</p>
+<p><strong>الموضوع:</strong> إنذار نظامي — إخلال بواجب تحديث مهام المشروع في النظام</p>
+<hr>
+<p>السيد/ <strong>{emp.employee_name}</strong> المحترم،</p>
+<p>المسمى الوظيفي: <strong>{emp.designation or '—'}</strong></p>
+<p>الإدارة: <strong>{emp.department or '—'}</strong></p>
+<p>رقم الموظف: <strong>{emp.name}</strong></p>
+<p>البريد الإلكتروني: <strong>{emp.user_id}</strong></p>
+<br>
+<p>تحية طيبة وبعد،</p>
+{daily_intro}
+<p>
+يُعد إدخال وتحديث المهام اليومية في النظام من المتطلبات الأساسية لضمان متابعة سير العمل،
+وإعداد التقارير، وتوثيق الإنجاز، ولا يُقبل الاكتفاء بالإنجاز الفعلي دون تسجيله في النظام.
+</p>
+<br>
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; text-align: right;">
+<tr style="background: #f5f5f5;"><th colspan="2">البيانات المسجّلة في النظام</th></tr>
+{project_rows}
+{daily_row}
+{last_task_row}
+<tr><td>تاريخ إصدار الإنذار</td><td>{format_datetime(data['report_date'], 'dd/MM/yyyy')}</td></tr>
+</table>
+<br>
+<p><strong>بناءً على ما سبق، نُخطركم رسمياً بما يلي:</strong></p>
+<ol style="padding-right: 20px;">
+<li>يُعد هذا الإشعار <strong>إنذاراً نظامياً</strong> وفق سياسات الشركة ولوائح العمل المعمول بها.</li>
+<li>يُطلب منكم <strong>استئناف تحديث مهام المشاريع فوراً</strong> والالتزام بالإدخال اليومي في النظام.</li>
+<li>في حال <strong>عدم تحديث مهام المشروع في يوم العمل نفسه (حتى الساعة 4:00 مساءً)</strong>،
+يُصدر هذا الإنذار تلقائياً في كل يوم عمل دون إدخال أو تعديل مسجّل.</li>
+<li>في حال استمرار الانقطاع لمدة <strong>{INACTIVITY_THRESHOLD_DAYS} يوماً متتالياً</strong>، تُطبَّق السياسة المالية المعتمدة
+(خصم يعادل نصف أيام الانقطاع من الراتب عبر Additional Salary) مع الاحتفاظ بالعلاقة الوظيفية.</li>
+<li>تكرار المخالفة قد يعرّضكم لإجراءات تأديبية إضافية وفق نظام العمل واللوائح الداخلية.</li>
+</ol>
+<br>
+<p><strong>المطلوب منكم خلال 24 ساعة:</strong></p>
+<ul style="padding-right: 20px;">
+<li>مراجعة جميع المهام المفتوحة والمسندة إليكم.</li>
+<li>تحديث حالة كل مهمة ونسبة الإنجاز والملاحظات في النظام.</li>
+<li>إخطار مدير المشاريع المباشر عند وجود أي عائق يمنع التحديث.</li>
+</ul>
+<br>
+<p>نسخة إلى:</p>
+<ul style="padding-right: 20px;">
+<li>الرئيس التنفيذي — a.abdullah@milestoneksa.com</li>
+<li>مدير العمليات — m.eqtefan@milestoneksa.com</li>
+<li>المدير المالي — m.alnasser@milestoneksa.com</li>
+</ul>
+<br>
+<p>وتفضلوا بقبول فائق الاحترام والتقدير،</p>
+<p><strong>إدارة الموارد البشرية</strong><br>{emp.company or 'شركة مرحلة المشروع للتطوير العقاري'}</p>
+<p style="font-size: 12px; color: #666;">— إشعار آلي من نظام متابعة مهام المشاريع — لا يُعد هذا الإنذار إنهاءً للخدمة —</p>
+</div>
+"""
+
+
+def preview_formal_warning(user: str = "a.alhaj@milestoneksa.com", daily_check: bool = False) -> dict:
+	"""Return subject + HTML draft without sending."""
+	data = build_formal_warning_context(user, daily_check=daily_check)
+	return {
+		"user": user,
+		"recipients_on_send": [user, *EXECUTIVE_RECIPIENTS],
+		"cc_on_send": EXECUTIVE_RECIPIENTS,
+		"subject": build_formal_warning_subject(data),
+		"html": build_formal_warning_html(data),
+		"context": {
+			"employee": data["employee"].name,
+			"employee_name": data["employee"].employee_name,
+			"days_inactive": data["days_inactive"],
+			"daily_check": data.get("daily_check"),
+			"no_action_today": data.get("no_action_today"),
+			"last_alteration": str(data["last_alteration"]) if data["last_alteration"] else None,
+			"last_task": f"{data['last_task_id']} | {data['last_task_subject']}" if data.get("last_task_id") else None,
+			"projects": data.get("project_list_text"),
+			"reference_no": data["reference_no"],
+		},
+	}
+
+
+def send_formal_warning(
+	user: str = "a.alhaj@milestoneksa.com",
+	extra_recipients: list[str] | None = None,
+	*,
+	daily_check: bool = False,
+	check_date=None,
+) -> dict:
+	"""Send formal system warning (إنذار نظامي) to user with executives on CC."""
+	data = build_formal_warning_context(user, daily_check=daily_check, check_date=check_date)
+	html = build_formal_warning_html(data)
+	subject = build_formal_warning_subject(data)
+
+	if frappe.db.exists("Email Template", FORMAL_WARNING_TEMPLATE):
+		doc = frappe.get_doc("Email Template", FORMAL_WARNING_TEMPLATE)
+	else:
+		doc = frappe.new_doc("Email Template")
+		doc.name = FORMAL_WARNING_TEMPLATE
+	doc.subject = subject
+	doc.use_html = 1
+	doc.enabled = 1
+	doc.response_html = html
+	doc.response = html
+	doc.save(ignore_permissions=True)
+
+	cc = list({*EXECUTIVE_RECIPIENTS, *(extra_recipients or [])})
+	frappe.sendmail(
+		recipients=[user],
+		cc=cc,
+		subject=subject,
+		message=html,
+		now=True,
+	)
+
+	return {
+		"sent_to": user,
+		"cc": cc,
+		"subject": subject,
+		"reference_no": data["reference_no"],
+	}
+
+
+def run_daily_formal_task_warnings() -> list[dict]:
+	"""4 PM Sun–Thu: send إنذار نظامي if no task action was recorded today."""
+	check_date = getdate(today())
+	results = []
+
+	for user in MONITORED_USERS:
+		try:
+			if has_task_action_on_date(user, check_date):
+				results.append({"user": user, "sent": False, "reason": "action_today", "date": str(check_date)})
+				continue
+
+			result = send_formal_warning(user, daily_check=True, check_date=check_date)
+			results.append({"user": user, "sent": True, "date": str(check_date), **result})
+		except Exception:
+			frappe.log_error(title=f"Daily formal task warning failed: {user}", message=frappe.get_traceback())
+			results.append({"user": user, "sent": False, "reason": "error", "date": str(check_date)})
+
+	return results

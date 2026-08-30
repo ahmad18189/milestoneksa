@@ -28,7 +28,6 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Employee",
    "options": "Employee",
    "reqd": 1
@@ -70,6 +69,7 @@
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Amount"
   },
   {
@@ -131,7 +131,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-02-12 10:32:10.388419",
+ "modified": "2026-08-26 14:46:16.999116",
  "modified_by": "m.alnasser@milestoneksa.com",
  "module": "Milestoneksa",
  "name": "Payment Approval Request",

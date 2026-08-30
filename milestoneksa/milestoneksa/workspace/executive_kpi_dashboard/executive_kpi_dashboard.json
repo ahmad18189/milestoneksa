@@ -1,0 +1,44 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"ed-header\", \"type\": \"header\", \"data\": {\"text\": \"<div class=\\\"ed-ws-title-row\\\"><span class=\\\"h4\\\"><b>Executive KPI Dashboard</b></span><a class=\\\"btn btn-default btn-sm ed-ws-settings-btn\\\" href=\\\"/app/executive-dashboard-settings\\\" onclick=\\\"frappe.set_route('Form','Executive Dashboard Settings'); return false;\\\">Settings</a></div>\", \"col\": 12}}, {\"id\": \"ed-block\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"Executive KPI Dashboard\", \"col\": 12}}]",
+ "creation": "2026-08-22 21:22:07.913324",
+ "custom_blocks": [
+  {
+   "custom_block_name": "Executive KPI Dashboard",
+   "label": "Executive KPI Dashboard"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "project",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Executive KPI Dashboard",
+ "links": [],
+ "modified": "2026-08-22 21:37:16.141567",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Executive KPI Dashboard",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "CEO"
+  }
+ ],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "label": "Dashboard Settings",
+   "link_to": "Executive Dashboard Settings",
+   "type": "DocType"
+  }
+ ],
+ "title": "Executive KPI Dashboard"
+}

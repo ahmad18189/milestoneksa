@@ -1,0 +1,436 @@
+{
+ "actions": [],
+ "creation": "2026-08-22 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "general_sb",
+  "enabled",
+  "default_company",
+  "dashboard_currency",
+  "column_break_gen",
+  "default_date_range",
+  "forecast_days",
+  "max_alerts_displayed",
+  "allow_system_manager_access",
+  "cash_sb",
+  "cash_accounts",
+  "excluded_cash_accounts",
+  "include_cash_on_hand",
+  "include_bank_accounts",
+  "include_restricted_cash",
+  "project_sb",
+  "active_project_statuses",
+  "select_target_projects",
+  "target_projects",
+  "project_progress_source",
+  "portfolio_value_source",
+  "portfolio_custom_field",
+  "column_break_proj",
+  "project_cost_source",
+  "sales_sb",
+  "sales_amount_basis",
+  "collections_source",
+  "include_sales_returns",
+  "include_advances",
+  "thresholds_sb",
+  "yellow_project_delay_days",
+  "red_project_delay_days",
+  "yellow_cost_variance_percent",
+  "red_cost_variance_percent",
+  "column_break_thr",
+  "yellow_collection_overdue_days",
+  "red_collection_overdue_days",
+  "yellow_minimum_cash_balance",
+  "red_minimum_cash_balance",
+  "ceo_approval_warning_days",
+  "ceo_approval_critical_days",
+  "freshness_sb",
+  "project_data_max_age_hours",
+  "sales_data_max_age_hours",
+  "collection_data_max_age_hours",
+  "cash_data_max_age_hours",
+  "alert_data_max_age_hours",
+  "visibility_sb",
+  "show_company_summary",
+  "show_project_status",
+  "show_liquidity_and_sales",
+  "show_risks_and_decisions",
+  "show_unavailable_kpis",
+  "targets_sb",
+  "monthly_sales_target",
+  "monthly_collection_target",
+  "minimum_cash_target",
+  "expected_margin_target"
+ ],
+ "fields": [
+  {
+   "fieldname": "general_sb",
+   "fieldtype": "Section Break",
+   "label": "General"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "default_company",
+   "fieldtype": "Link",
+   "label": "Default Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "dashboard_currency",
+   "fieldtype": "Link",
+   "label": "Dashboard Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "column_break_gen",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Current Month",
+   "fieldname": "default_date_range",
+   "fieldtype": "Select",
+   "label": "Default Date Range",
+   "options": "Current Month\nCurrent Quarter\nCurrent Fiscal Year\nLast 30 Days\nLast 90 Days\nCustom"
+  },
+  {
+   "default": "90",
+   "fieldname": "forecast_days",
+   "fieldtype": "Int",
+   "label": "Forecast Days"
+  },
+  {
+   "default": "10",
+   "fieldname": "max_alerts_displayed",
+   "fieldtype": "Int",
+   "label": "Max Alerts Displayed"
+  },
+  {
+   "default": "0",
+   "description": "Allow System Manager to call the dashboard API (workspace remains CEO-only).",
+   "fieldname": "allow_system_manager_access",
+   "fieldtype": "Check",
+   "label": "Allow System Manager Access"
+  },
+  {
+   "fieldname": "cash_sb",
+   "fieldtype": "Section Break",
+   "label": "Cash and Accounts"
+  },
+  {
+   "fieldname": "cash_accounts",
+   "fieldtype": "Table",
+   "label": "Cash Accounts",
+   "options": "Executive Dashboard Account"
+  },
+  {
+   "fieldname": "excluded_cash_accounts",
+   "fieldtype": "Table",
+   "label": "Excluded Cash Accounts",
+   "options": "Executive Dashboard Account"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_cash_on_hand",
+   "fieldtype": "Check",
+   "label": "Include Cash on Hand"
+  },
+  {
+   "default": "1",
+   "description": "Used only as seed helper when Cash Accounts table is empty.",
+   "fieldname": "include_bank_accounts",
+   "fieldtype": "Check",
+   "label": "Include Bank Accounts"
+  },
+  {
+   "default": "0",
+   "fieldname": "include_restricted_cash",
+   "fieldtype": "Check",
+   "label": "Include Restricted Cash"
+  },
+  {
+   "fieldname": "project_sb",
+   "fieldtype": "Section Break",
+   "label": "Project Settings"
+  },
+  {
+   "default": "All",
+   "description": "Comma-separated Project statuses, or All for every status. Used when Target Projects table is empty.",
+   "fieldname": "active_project_statuses",
+   "fieldtype": "Small Text",
+   "label": "Active Project Statuses"
+  },
+  {
+   "fieldname": "select_target_projects",
+   "fieldtype": "Button",
+   "label": "Select Target Projects"
+  },
+  {
+   "description": "If rows exist, the dashboard shows only included projects. Leave empty to use Active Project Statuses.",
+   "fieldname": "target_projects",
+   "fieldtype": "Table",
+   "label": "Target Projects",
+   "options": "Executive Dashboard Project"
+  },
+  {
+   "default": "Project Percent Complete",
+   "fieldname": "project_progress_source",
+   "fieldtype": "Select",
+   "label": "Project Progress Source",
+   "options": "Project Percent Complete\nTask Completion\nTask Progress"
+  },
+  {
+   "default": "Project Estimated Cost",
+   "fieldname": "portfolio_value_source",
+   "fieldtype": "Select",
+   "label": "Portfolio Value Source",
+   "options": "Project Estimated Cost\nProject Purchase + Journal Cost\nProject Expected Sales\nSubmitted Sales Invoices\nCustom Field"
+  },
+  {
+   "depends_on": "eval:doc.portfolio_value_source==\"Custom Field\"",
+   "fieldname": "portfolio_custom_field",
+   "fieldtype": "Data",
+   "label": "Portfolio Custom Field"
+  },
+  {
+   "fieldname": "column_break_proj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Project Actual Cost",
+   "fieldname": "project_cost_source",
+   "fieldtype": "Select",
+   "label": "Project Cost Source",
+   "options": "Project Actual Cost\nProject Purchase + Journal Cost\nPurchase Invoices\nGeneral Ledger\nExisting Financial Summary API"
+  },
+  {
+   "fieldname": "sales_sb",
+   "fieldtype": "Section Break",
+   "label": "Sales and Collections"
+  },
+  {
+   "default": "Grand Total",
+   "fieldname": "sales_amount_basis",
+   "fieldtype": "Select",
+   "label": "Sales Amount Basis",
+   "options": "Net Total\nGrand Total\nBase Net Total\nBase Grand Total"
+  },
+  {
+   "default": "Allocated Payment References",
+   "fieldname": "collections_source",
+   "fieldtype": "Select",
+   "label": "Collections Source",
+   "options": "Payment Entry\nAllocated Payment References\nInvoice Paid Amount"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_sales_returns",
+   "fieldtype": "Check",
+   "label": "Include Sales Returns"
+  },
+  {
+   "default": "0",
+   "fieldname": "include_advances",
+   "fieldtype": "Check",
+   "label": "Include Advances"
+  },
+  {
+   "fieldname": "thresholds_sb",
+   "fieldtype": "Section Break",
+   "label": "Alert Thresholds"
+  },
+  {
+   "default": "1",
+   "fieldname": "yellow_project_delay_days",
+   "fieldtype": "Int",
+   "label": "Yellow Project Delay Days"
+  },
+  {
+   "default": "14",
+   "fieldname": "red_project_delay_days",
+   "fieldtype": "Int",
+   "label": "Red Project Delay Days"
+  },
+  {
+   "default": "5",
+   "fieldname": "yellow_cost_variance_percent",
+   "fieldtype": "Percent",
+   "label": "Yellow Cost Variance Percent"
+  },
+  {
+   "default": "10",
+   "fieldname": "red_cost_variance_percent",
+   "fieldtype": "Percent",
+   "label": "Red Cost Variance Percent"
+  },
+  {
+   "fieldname": "column_break_thr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "7",
+   "fieldname": "yellow_collection_overdue_days",
+   "fieldtype": "Int",
+   "label": "Yellow Collection Overdue Days"
+  },
+  {
+   "default": "30",
+   "fieldname": "red_collection_overdue_days",
+   "fieldtype": "Int",
+   "label": "Red Collection Overdue Days"
+  },
+  {
+   "fieldname": "yellow_minimum_cash_balance",
+   "fieldtype": "Currency",
+   "label": "Yellow Minimum Cash Balance"
+  },
+  {
+   "fieldname": "red_minimum_cash_balance",
+   "fieldtype": "Currency",
+   "label": "Red Minimum Cash Balance"
+  },
+  {
+   "default": "2",
+   "fieldname": "ceo_approval_warning_days",
+   "fieldtype": "Int",
+   "label": "CEO Approval Warning Days"
+  },
+  {
+   "default": "5",
+   "fieldname": "ceo_approval_critical_days",
+   "fieldtype": "Int",
+   "label": "CEO Approval Critical Days"
+  },
+  {
+   "fieldname": "freshness_sb",
+   "fieldtype": "Section Break",
+   "label": "Data Freshness (Hours)"
+  },
+  {
+   "default": "24",
+   "fieldname": "project_data_max_age_hours",
+   "fieldtype": "Int",
+   "label": "Project Data Max Age Hours"
+  },
+  {
+   "default": "24",
+   "fieldname": "sales_data_max_age_hours",
+   "fieldtype": "Int",
+   "label": "Sales Data Max Age Hours"
+  },
+  {
+   "default": "24",
+   "fieldname": "collection_data_max_age_hours",
+   "fieldtype": "Int",
+   "label": "Collection Data Max Age Hours"
+  },
+  {
+   "default": "24",
+   "fieldname": "cash_data_max_age_hours",
+   "fieldtype": "Int",
+   "label": "Cash Data Max Age Hours"
+  },
+  {
+   "default": "24",
+   "fieldname": "alert_data_max_age_hours",
+   "fieldtype": "Int",
+   "label": "Alert Data Max Age Hours"
+  },
+  {
+   "fieldname": "visibility_sb",
+   "fieldtype": "Section Break",
+   "label": "Dashboard Visibility"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_company_summary",
+   "fieldtype": "Check",
+   "label": "Show Company Summary"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_project_status",
+   "fieldtype": "Check",
+   "label": "Show Project Status"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_liquidity_and_sales",
+   "fieldtype": "Check",
+   "label": "Show Liquidity and Sales"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_risks_and_decisions",
+   "fieldtype": "Check",
+   "label": "Show Risks and Decisions"
+  },
+  {
+   "default": "1",
+   "fieldname": "show_unavailable_kpis",
+   "fieldtype": "Check",
+   "label": "Show Unavailable KPIs"
+  },
+  {
+   "fieldname": "targets_sb",
+   "fieldtype": "Section Break",
+   "label": "Optional Targets"
+  },
+  {
+   "fieldname": "monthly_sales_target",
+   "fieldtype": "Currency",
+   "label": "Monthly Sales Target"
+  },
+  {
+   "fieldname": "monthly_collection_target",
+   "fieldtype": "Currency",
+   "label": "Monthly Collection Target"
+  },
+  {
+   "fieldname": "minimum_cash_target",
+   "fieldtype": "Currency",
+   "label": "Minimum Cash Target"
+  },
+  {
+   "fieldname": "expected_margin_target",
+   "fieldtype": "Percent",
+   "label": "Expected Margin Target"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-08-22 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Milestoneksa",
+ "name": "Executive Dashboard Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "CEO",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

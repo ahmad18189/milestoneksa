@@ -119,6 +119,16 @@
 	width: 100%;
 	min-height: 420px;
 	height: 100%;
+	display: none; /* legacy Tabulator host unused after outline rewrite */
+}
+
+.project-task-tab-wrapper tr.task-row-focus-highlight td {
+	box-shadow: inset 0 0 0 2px var(--primary, #2490ef);
+}
+
+.project-task-tab-wrapper [data-role="clear-sort"] {
+	border-color: var(--primary, #2490ef);
+	color: var(--primary, #2490ef);
 }
 
 .project-task-table-scroll .tabulator {
@@ -579,9 +589,68 @@ body.project-task-column-resizing {
 
 .project-task-tab-wrapper td.editable-cell[data-field="status"],
 .project-task-tab-wrapper td.editable-cell[data-field="priority"],
+.project-task-tab-wrapper td.editable-cell[data-field="assigned_to"],
 .project-task-tab-wrapper td.editable-cell[data-field="custom_actual_start_date"],
 .project-task-tab-wrapper td.editable-cell[data-field="custom_actual_end_date"] {
 	background-color: transparent;
+}
+
+.project-task-tab-wrapper .task-assign-list {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.project-task-tab-wrapper .task-assign-pill {
+	align-items: center;
+	background: color-mix(in srgb, var(--primary, #2490ef) 12%, #fff);
+	border-radius: 999px;
+	color: var(--text-color, #1f272e);
+	display: inline-flex;
+	font-size: 11px;
+	font-weight: 600;
+	gap: 4px;
+	line-height: 1.2;
+	max-width: 140px;
+	padding: 3px 6px 3px 8px;
+}
+
+.project-task-tab-wrapper .task-assign-pill .task-assign-remove {
+	background: transparent;
+	border: 0;
+	border-radius: 50%;
+	color: inherit;
+	cursor: pointer;
+	font-size: 13px;
+	line-height: 1;
+	opacity: 0.7;
+	padding: 0 2px;
+}
+
+.project-task-tab-wrapper .task-assign-pill .task-assign-remove:hover {
+	opacity: 1;
+}
+
+.project-task-tab-wrapper .task-assign-empty {
+	color: var(--text-muted, #6c7680);
+	font-size: 11px;
+}
+
+.project-task-tab-wrapper .inline-assign-control {
+	min-width: 260px;
+}
+
+.project-task-tab-wrapper .inline-select-control {
+	max-height: 280px;
+	min-width: 170px;
+	overflow: auto;
+}
+
+.project-task-tab-wrapper .inline-select-control .btn-block {
+	justify-content: flex-start;
+	text-align: start;
+	white-space: normal;
 }
 
 .project-task-tab-wrapper .task-badge,
@@ -687,6 +756,29 @@ body.project-task-column-resizing {
 .project-task-tab-wrapper [data-column="total_costing_amount"] {
 	text-align: center;
 	white-space: nowrap;
+}
+
+.project-task-tab-wrapper .project-task-table tfoot {
+	position: sticky;
+	bottom: 0;
+	z-index: 2;
+}
+
+.project-task-tab-wrapper .project-task-total-row td {
+	background: var(--subtle-fg, #f4f5f6);
+	border-top: 2px solid var(--border-color, #d1d8dd);
+	font-size: 12px;
+	padding: 8px 10px !important;
+	vertical-align: middle;
+}
+
+.project-task-tab-wrapper .project-task-total-label {
+	text-align: start !important;
+	white-space: normal;
+}
+
+.project-task-tab-wrapper .project-task-total-value {
+	font-variant-numeric: tabular-nums;
 }
 
 .project-task-tab-wrapper [data-column="exp_start_date"],

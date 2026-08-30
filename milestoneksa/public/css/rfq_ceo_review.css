@@ -1,0 +1,63 @@
+.rfq-ceo-comparison {
+	margin-top: 4px;
+}
+
+.rfq-ceo-comparison-table table {
+	background: var(--fg-color, #fff);
+}
+
+.rfq-ceo-winner-banner,
+.rfq-ceo-pending-banner,
+.rfq-ceo-rejected-banner {
+	border-radius: 8px;
+	margin-bottom: 12px;
+	padding: 10px 12px;
+}
+
+.rfq-ceo-winner-banner {
+	background: color-mix(in srgb, #28a745 14%, #fff);
+	border: 1px solid color-mix(in srgb, #28a745 35%, transparent);
+	color: #146c2e;
+}
+
+.rfq-ceo-pending-banner {
+	background: color-mix(in srgb, #f0ad4e 16%, #fff);
+	border: 1px solid color-mix(in srgb, #f0ad4e 40%, transparent);
+	color: #8a5b00;
+}
+
+.rfq-ceo-rejected-banner {
+	background: color-mix(in srgb, #dc3545 12%, #fff);
+	border: 1px solid color-mix(in srgb, #dc3545 30%, transparent);
+	color: #842029;
+}
+
+.rfq-ceo-row--winner td {
+	background: color-mix(in srgb, #28a745 18%, #fff) !important;
+	font-weight: 600;
+}
+
+.rfq-ceo-row--lowest td {
+	background: color-mix(in srgb, #2490ef 10%, #fff);
+}
+
+.rfq-ceo-badge {
+	border-radius: 999px;
+	display: inline-block;
+	font-size: 10px;
+	font-weight: 700;
+	line-height: 1;
+	margin-inline-start: 6px;
+	padding: 3px 7px;
+	vertical-align: middle;
+}
+
+.rfq-ceo-badge--winner {
+	background: #28a745;
+	color: #fff;
+}
+
+.rfq-ceo-badge--lowest {
+	background: #2490ef;
+	color: #fff;
+}

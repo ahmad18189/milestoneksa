@@ -97,18 +97,16 @@ class PaymentApprovalRequest(Document):
 		"""Handle workflow state changes: create desk announcements (log row is added in validate / on_update_after_submit)."""
 		current_state = self.workflow_state
 
-		# Don't create announcements for Draft state
+		# Always unpublish announcements from the previous workflow state.
+		self.unpublish_old_announcements()
+
+		# Don't create announcements for Draft or terminal states without a next action.
 		if not current_state or current_state == "Draft":
 			return
 
-		# Get the role that needs to act on this state
+		# Create an announcement only when a workflow transition identifies the acting role.
 		role = self.get_role_for_workflow_state(current_state)
-		
 		if role:
-			# Unpublish old announcements for this Payment Approval Request
-			self.unpublish_old_announcements()
-			
-			# Create new announcement for the current role
 			self.create_desk_announcement(role, current_state)
 	
 	def get_role_for_workflow_state(self, state):
@@ -138,33 +136,66 @@ class PaymentApprovalRequest(Document):
 			frappe.log_error(f"Error getting role for workflow state: {str(e)}")
 			return None
 	
+	def _get_requester_user(self):
+		"""User who should receive requester-facing announcements (not all Employees)."""
+		user = None
+		if self.employee:
+			user = frappe.db.get_value("Employee", self.employee, "user_id")
+		if not user and self.owner and self.owner != "Administrator":
+			user = self.owner
+		if user and frappe.db.exists("User", user) and frappe.db.get_value("User", user, "enabled"):
+			return user
+		return None
+
 	def create_desk_announcement(self, role, workflow_state):
-		"""Create a desk announcement for the specified role"""
+		"""Create a desk announcement for the acting approver role, or the requester only.
+
+		Approver roles (CFO/CEO/COO/Manager/...) are targeted By Role.
+		Employee role means the requester must act (e.g. Rejected By CFO) — target that
+		user only so other employees do not see other people's requests.
+		"""
 		try:
-			# Build detailed message with all relevant information
 			message = self.build_announcement_message(workflow_state)
-			
-			# Create the announcement
-			announcement = frappe.get_doc({
-				"doctype": "Desk Announcement",
-				"title": f"Payment Approval Required: {self.name}",
-				"message": message,
-				"link_url": f"{get_url()}/app/payment-approval-request/{self.name}",
-				"show_policy": "Until Dismissed",
-				"audience": "By Role",
-				"is_published": 1
-			})
-			
-			# Add the role to the roles child table
-			announcement.append("roles", {
-				"role": role
-			})
-			
-			# Insert the announcement
+			link_url = f"{get_url()}/app/payment-approval-request/{self.name}"
+
+			# Requester-facing steps: never broadcast to all Employees
+			if role == "Employee":
+				requester = self._get_requester_user()
+				if not requester:
+					frappe.log_error(
+						f"No requester user for {self.name}; skipped Employee announcement",
+						"Payment Approval Announcement",
+					)
+					return
+				announcement = frappe.get_doc(
+					{
+						"doctype": "Desk Announcement",
+						"title": f"Payment Approval Required: {self.name}",
+						"message": message,
+						"link_url": link_url,
+						"show_policy": "Until Dismissed",
+						"audience": "By User",
+						"is_published": 1,
+					}
+				)
+				announcement.append("users", {"user": requester})
+			else:
+				announcement = frappe.get_doc(
+					{
+						"doctype": "Desk Announcement",
+						"title": f"Payment Approval Required: {self.name}",
+						"message": message,
+						"link_url": link_url,
+						"show_policy": "Until Dismissed",
+						"audience": "By Role",
+						"is_published": 1,
+					}
+				)
+				announcement.append("roles", {"role": role})
+
 			announcement.insert(ignore_permissions=True)
-			
 			frappe.db.commit()
-			
+
 		except Exception as e:
 			frappe.log_error(f"Error creating desk announcement: {str(e)}")
 	

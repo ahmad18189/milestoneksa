@@ -140,13 +140,19 @@
 .modal.desk-announcement--payment-approval .par-announcement__actions,
 .par-announcement__actions,
 .modal.desk-announcement--payment-approval a[href*="payment-approval-request"],
+.modal.desk-announcement--payment-approval a[href="{link}"],
+.modal.desk-announcement--payment-approval a[href*="{link}"],
 .modal.desk-announcement--payment-approval .par-announcement-legacy-cta {
 	display: none !important;
 	visibility: hidden !important;
 	height: 0 !important;
+	max-height: 0 !important;
 	overflow: hidden !important;
 	margin: 0 !important;
 	padding: 0 !important;
+	border: 0 !important;
+	font-size: 0 !important;
+	line-height: 0 !important;
 }
 
 /* Legacy markup fallback (old announcements without par-announcement) */

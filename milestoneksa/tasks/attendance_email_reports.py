@@ -59,6 +59,43 @@ AR_LABELS_CHECKOUT = {
 	"footer": "هذا البريد مرسل تلقائياً من نظام الموارد البشرية.",
 }
 
+AR_LABELS_WARNING = {
+	"title": "تحذير رسمي: عدم تسجيل الحضور اليوم",
+	"report_date": "تاريخ التقرير",
+	"warning_badge": "تحذير رسمي",
+	"greeting": "السلام عليكم ورحمة الله وبركاته،",
+	"dear_prefix": "عزيزي/عزيزتي",
+	"intro": (
+		"نود تنبيهكم بشكل رسمي بخصوص عدم الالتزام باستخدام نظام "
+		"تسجيل الحضور والانصراف (Check-in / Check-out) في نظام الشركة. "
+		"أدناه قائمة الموظفين الذين لم يسجلوا الدخول لهذا اليوم."
+	),
+	"intro_personal": (
+		"نود تنبيهكم بشكل رسمي بخصوص عدم تسجيل حضوركم اليوم عبر نظام "
+		"تسجيل الحضور والانصراف (Check-in / Check-out) في نظام الشركة."
+	),
+	"summary": "ملخص",
+	"not_checked_in_title": "الموظفون الذين لم يسجلوا الدخول",
+	"employee": "الموظف",
+	"department": "القسم",
+	"no_records": "لا يوجد",
+	"action": (
+		"إن تسجيل الحضور عند بداية الدوام عبر النظام إجراء إلزامي لجميع الموظفين. "
+		"يُرجى الالتزام فوراً باستخدام خاصية تسجيل الدخول والخروج في النظام."
+	),
+	"escalation_title": "تنويه هام",
+	"escalation": (
+		"في حال استمرار عدم الالتزام بهذا الإجراء، سيتم تصعيد الأمر إلى الإدارة العليا "
+		"واتخاذ الإجراءات النظامية اللازمة."
+	),
+	"regards": "مع خالص التحية، الإدارة",
+	"footer": "هذا البريد مرسل تلقائياً من نظام الموارد البشرية بعد تقرير الحضور اليومي.",
+}
+
+WARNING_SUBJECT = "Official Warning: Missing Check-in"
+WARNING_CC_ROLES = ("CEO", "COO")
+CTO_DESIGNATION = "المدير التقني"
+
 
 @dataclass
 class EmployeeRow:
@@ -113,14 +150,42 @@ def _get_recipients() -> list[tuple[str, str]]:
 
 
 def _get_active_employees() -> list[EmployeeRow]:
+	"""Active employees with a real linked User (can check in). Excludes no-user / test / CEO-COO ignored roles."""
 	rows = frappe.get_all(
 		"Employee",
 		filters={"status": "Active"},
-		fields=["name", "employee_name", "department", "default_shift", "user_id"],
+		fields=["name", "employee_name", "department", "default_shift", "user_id", "status"],
 		order_by="employee_name asc",
 	)
 	ignored_users = _get_users_with_ignored_roles()
-	return [EmployeeRow(**r) for r in rows if not r.user_id or r.user_id not in ignored_users]
+	out: list[EmployeeRow] = []
+	for r in rows:
+		# Hard guard: only Active status
+		if (r.status or "").strip() != "Active":
+			continue
+		user_id = (r.user_id or "").strip()
+		# No linked User → cannot check in; skip from reports and warnings
+		if not user_id:
+			continue
+		# Skip test / system accounts
+		if user_id in {"Administrator", "Guest"}:
+			continue
+		if (r.employee_name or "").strip().lower() == "test":
+			continue
+		if user_id in ignored_users:
+			continue
+		if frappe.db.get_value("User", user_id, "enabled") != 1:
+			continue
+		out.append(
+			EmployeeRow(
+				name=r.name,
+				employee_name=r.employee_name,
+				department=r.department,
+				default_shift=r.default_shift,
+				user_id=r.user_id,
+			)
+		)
+	return out
 
 
 def _report_date_str() -> str:
@@ -239,6 +304,73 @@ def _working_hours_for_employee(
 	return float(total_hours or 0)
 
 
+def _employee_email(employee_name: str, user_id: str | None = None) -> str | None:
+	row = frappe.db.get_value(
+		"Employee",
+		employee_name,
+		["company_email", "prefered_email", "personal_email", "user_id", "status"],
+		as_dict=True,
+	)
+	if not row:
+		return None
+	# Never email inactive / non-active employees
+	if (row.get("status") or "").strip() != "Active":
+		return None
+	for field in ("company_email", "prefered_email", "personal_email", "user_id"):
+		value = (row.get(field) or "").strip()
+		if value and "@" in value:
+			return value.lower()
+	if user_id and "@" in user_id:
+		return user_id.lower()
+	return None
+
+
+def _role_emails(roles: tuple[str, ...] | list[str]) -> list[str]:
+	seen: set[str] = set()
+	out: list[str] = []
+	for role in roles:
+		for user in get_users_with_role(role):
+			if frappe.db.get_value("User", user, "enabled") == 0:
+				continue
+			if user in {"Administrator", "Guest"}:
+				continue
+			email = frappe.db.get_value("User", user, "email") or user
+			if not email or "@" not in email or email in seen:
+				continue
+			# Skip shared mailbox accounts used only for roles
+			if email.startswith("info@"):
+				continue
+			seen.add(email)
+			out.append(email)
+	return out
+
+
+def _cto_emails() -> list[str]:
+	rows = frappe.get_all(
+		"Employee",
+		filters={"status": "Active", "designation": CTO_DESIGNATION},
+		fields=["name", "user_id", "status"],
+	)
+	emails: list[str] = []
+	for row in rows:
+		if (row.status or "").strip() != "Active":
+			continue
+		email = _employee_email(row.name, row.user_id)
+		if email:
+			emails.append(email)
+	return emails
+
+
+def _warning_cc_emails() -> list[str]:
+	seen: set[str] = set()
+	out: list[str] = []
+	for email in _role_emails(WARNING_CC_ROLES) + _cto_emails():
+		if email not in seen:
+			seen.add(email)
+			out.append(email)
+	return out
+
+
 def build_checkin_report_data() -> dict:
 	employees = _get_active_employees()
 	checkins = _today_checkins()
@@ -252,16 +384,20 @@ def build_checkin_report_data() -> dict:
 		if logs:
 			checked_in.append(
 				{
+					"employee": emp.name,
 					"employee_name": emp.employee_name or emp.name,
 					"department": emp.department or "",
 					"checkin_time": _format_time(_first_checkin_time(logs)),
+					"email": _employee_email(emp.name, emp.user_id),
 				}
 			)
 		else:
 			not_checked_in.append(
 				{
+					"employee": emp.name,
 					"employee_name": emp.employee_name or emp.name,
 					"department": emp.department or "",
+					"email": _employee_email(emp.name, emp.user_id),
 				}
 			)
 
@@ -399,7 +535,114 @@ def send_checkin_summary(update_last_sent: bool = True) -> int:
 	)
 	if sent and update_last_sent:
 		_mark_last_sent("mksa_checkin_report_last_sent")
+		# Warning to employees who did not check in — same cron cycle, after management report
+		send_not_checked_in_warning(update_last_sent=True)
 	return sent
+
+
+def send_not_checked_in_warning(update_last_sent: bool = True) -> dict:
+	"""Warn employees who did not check in today (personalized), and notify CEO/COO/CTO separately."""
+	if not _reports_enabled():
+		return {"sent": 0, "reason": "disabled"}
+
+	if update_last_sent and _already_sent_today("mksa_checkin_warning_last_sent"):
+		return {"sent": 0, "reason": "already_sent"}
+
+	args = build_checkin_report_data()
+	not_checked_in = args.get("not_checked_in") or []
+	if not not_checked_in:
+		if update_last_sent:
+			_mark_last_sent("mksa_checkin_warning_last_sent")
+		return {"sent": 0, "reason": "none_missing", "recipients": []}
+
+	table_rows = [
+		{
+			"employee_name": row["employee_name"],
+			"department": row.get("department") or "",
+		}
+		for row in not_checked_in
+	]
+	base_args = {
+		"labels": dict(AR_LABELS_WARNING),
+		"report_date": args["report_date"],
+		"not_checked_in": table_rows,
+		"counts": {"not_checked_in": len(not_checked_in)},
+		"employee_name": "",
+	}
+	subject = f"{WARNING_SUBJECT} - {args['report_date']}"
+
+	employee_recipients = []
+	sent_employees = []
+	errors = []
+
+	for row in not_checked_in:
+		email = row.get("email")
+		if not email:
+			continue
+		employee_recipients.append(email)
+		try:
+			frappe.sendmail(
+				recipients=[email],
+				subject=subject,
+				template="attendance_checkin_warning",
+				args={
+					**base_args,
+					"employee_name": row["employee_name"],
+				},
+				header=[AR_LABELS_WARNING["title"], "orange"],
+				now=True,
+			)
+			sent_employees.append(email)
+		except Exception:
+			errors.append(email)
+			frappe.log_error(
+				title=f"Attendance check-in warning failed -> {email}",
+				message=frappe.get_traceback(),
+			)
+
+	# Separate To emails for CEO / COO / CTO (not CC)
+	leadership = [
+		email
+		for email in _warning_cc_emails()
+		if email not in set(employee_recipients)
+	]
+	sent_leadership = []
+	for email in leadership:
+		try:
+			frappe.sendmail(
+				recipients=[email],
+				subject=subject,
+				template="attendance_checkin_warning",
+				args=base_args,
+				header=[AR_LABELS_WARNING["title"], "orange"],
+				now=True,
+			)
+			sent_leadership.append(email)
+		except Exception:
+			errors.append(email)
+			frappe.log_error(
+				title=f"Attendance check-in warning (leadership) failed -> {email}",
+				message=frappe.get_traceback(),
+			)
+
+	if sent_employees or sent_leadership:
+		if update_last_sent:
+			_mark_last_sent("mksa_checkin_warning_last_sent")
+		return {
+			"sent": len(sent_employees) + len(sent_leadership),
+			"recipients": sent_employees,
+			"leadership": sent_leadership,
+			"not_checked_in_count": len(not_checked_in),
+			"errors": errors,
+		}
+
+	return {
+		"sent": 0,
+		"reason": "error" if errors else "no_emails",
+		"recipients": employee_recipients,
+		"errors": errors,
+		"not_checked_in_count": len(not_checked_in),
+	}
 
 
 def send_checkout_summary(update_last_sent: bool = True) -> int:
@@ -455,6 +698,14 @@ def run_due_attendance_email_reports():
 			and not _already_sent_today("mksa_checkin_report_last_sent")
 		):
 			send_checkin_summary(update_last_sent=True)
+		elif (
+			settings.mksa_checkin_report_time
+			and _time_in_send_window(settings.mksa_checkin_report_time)
+			and _already_sent_today("mksa_checkin_report_last_sent")
+			and not _already_sent_today("mksa_checkin_warning_last_sent")
+		):
+			# Management report already sent; still deliver employee warning if pending
+			send_not_checked_in_warning(update_last_sent=True)
 		if (
 			settings.mksa_checkout_report_time
 			and _time_in_send_window(settings.mksa_checkout_report_time)
@@ -485,14 +736,42 @@ def send_test_attendance_email(test_email: str | None = None, report_type: str |
 		args = build_checkin_report_data()
 		subject = f"{AR_LABELS_CHECKIN['title']} (اختبار) - {args['report_date']}"
 		template = "attendance_checkin_summary"
+		sent = _send_report_email([email], subject, template, args)
 	elif report_type == REPORT_CHECKOUT:
 		args = build_checkout_report_data()
 		subject = f"{AR_LABELS_CHECKOUT['title']} (اختبار) - {args['report_date']}"
 		template = "attendance_checkout_summary"
+		sent = _send_report_email([email], subject, template, args)
+	elif report_type == "Warning":
+		args = build_checkin_report_data()
+		not_checked_in = args.get("not_checked_in") or []
+		if not not_checked_in:
+			frappe.throw(_("لا يوجد موظفون لم يسجلوا الدخول اليوم."))
+		warning_args = {
+			"labels": dict(AR_LABELS_WARNING),
+			"report_date": args["report_date"],
+			"not_checked_in": [
+				{
+					"employee_name": row["employee_name"],
+					"department": row.get("department") or "",
+				}
+				for row in not_checked_in
+			],
+			"counts": {"not_checked_in": len(not_checked_in)},
+			"employee_name": not_checked_in[0]["employee_name"],
+		}
+		frappe.sendmail(
+			recipients=[email],
+			subject=f"{WARNING_SUBJECT} (Test) - {args['report_date']}",
+			template="attendance_checkin_warning",
+			args=warning_args,
+			header=[AR_LABELS_WARNING["title"], "orange"],
+			now=True,
+		)
+		sent = 1
 	else:
 		frappe.throw(_("يرجى اختيار نوع التقرير: تسجيل الدخول أو تسجيل الخروج."))
 
-	sent = _send_report_email([email], subject, template, args)
 	if not sent:
 		frappe.throw(_("فشل إرسال بريد الاختبار. راجع سجل الأخطاء."))
 

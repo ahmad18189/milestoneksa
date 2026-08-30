@@ -31,9 +31,10 @@ app_include_css = [
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.css",
     "/assets/milestoneksa/css/quick_checkin.css",
     "/assets/milestoneksa/css/font.css",
-    "/assets/milestoneksa/css/announcement_popup.css?v=3",
-    "/assets/milestoneksa/css/project_task_tab.css?v=50",
-    "/assets/milestoneksa/css/lib/tabulator.min.css",
+    "/assets/milestoneksa/css/announcement_popup.css?v=4",
+    "/assets/milestoneksa/css/project_task_tab.css?v=69",
+    "/assets/milestoneksa/css/executive_dashboard_v4.css",
+    "/assets/milestoneksa/css/rfq_ceo_review.css?v=2",
 ]
 
 app_include_js = [
@@ -42,11 +43,11 @@ app_include_js = [
     "assets/milestoneksa/js/setup_quick_checkin.js",
     "assets/milestoneksa/js/test_time_dialog.js",
     "assets/milestoneksa/js/test_fields_dialog.js",
-    "assets/milestoneksa/js/announcement_popup.js",
+    "assets/milestoneksa/js/announcement_popup.js?v=4",
     #"/assets/milestoneksa/js/fix_task_gantt_scroll.js",
     #"/assets/milestoneksa/js/task_gantt_config.js",
     "https://cdn.jsdelivr.net/npm/frappe-gantt@1.0.3/dist/frappe-gantt.umd.min.js",
-    "/assets/milestoneksa/js/lib/tabulator.min.js",
+    "/assets/milestoneksa/js/executive_dashboard_v4.js",
 ]
 
 page_css = {
@@ -66,7 +67,8 @@ doctype_js = {
 	],
 	"Task": ["public/js/task_completion_acknowledgment.js"],
 	"Project": ["public/js/project_task_tab.js", "public/js/project_dashboard_tab.js", "public/js/project_financial_summary_tab.js", "public/js/project_building_info.js"],
-	"Project Proposal": ["public/js/project_proposal_dashboard.js", "public/js/project_building_info.js"]
+	"Project Proposal": ["public/js/project_proposal_dashboard.js", "public/js/project_building_info.js"],
+	"Request for Quotation": ["public/js/rfq_ceo_review.js"],
 }
 
 doc_events = {
@@ -114,8 +116,6 @@ doc_events = {
 
 scheduler_events = {
 	"cron": {
-		# Daily task summary: 4 PM (server time), Sun–Thu only (exclude Fri & Sat)
-		"0 16 * * 0-4": ["milestoneksa.tasks.daily_task_summary.send_daily_project_task_summary"],
 		# Attendance check-in/check-out emails: every 5 min Sun–Thu; times from HR Settings
 		"*/5 * * * 0-4": [
 			"milestoneksa.tasks.attendance_email_reports.run_due_attendance_email_reports"
@@ -123,13 +123,16 @@ scheduler_events = {
 		"0 8 * * 0-4": [
 			"milestoneksa.tasks.contract_expiry_alerts.run_contract_expiry_alerts"
 		],
-		# Project task inactivity: daily notice when user has not altered tasks for 15+ days
-		"0 9 * * 0-4": [
-			"milestoneksa.project_user_inactivity_email.run_daily_project_inactivity_emails",
+		# Ahmed Abdelrahman auto check-in (random 8–9 AM Riyadh), Sun–Thu — 06:00 UTC
+		"0 6 * * 0-4": [
 			"milestoneksa.tasks.auto_attendance_ahmed_abdelrahman.run_daily_auto_checkin",
 		],
-		# Ahmed Abdelrahman auto check-out (random 5–7 PM), Sun–Thu only
-		"0 19 * * 0-4": [
+		"0 9 * * 0-4": [
+			"milestoneksa.project_user_inactivity_email.run_daily_project_inactivity_emails",
+		],
+		# Daily task summary + Ahmed auto check-out (random 5–7 PM Riyadh) — 16:00 UTC
+		"0 16 * * 0-4": [
+			"milestoneksa.tasks.daily_task_summary.send_daily_project_task_summary",
 			"milestoneksa.tasks.auto_attendance_ahmed_abdelrahman.run_daily_auto_checkout",
 		],
 	},
@@ -262,14 +265,18 @@ has_permission = {
 	"CRM Task": "milestoneksa.crm_task_permissions.has_crm_task_permission",
 }
 
-after_migrate = ["milestoneksa.crm_task_permissions.ensure_crm_task_docperms"]
+after_migrate = [
+	"milestoneksa.crm_task_permissions.ensure_crm_task_docperms",
+	"milestoneksa.tasks.auto_attendance_ahmed_abdelrahman.ensure_scheduled_jobs",
+]
 
 # DocType Class
 # ---------------
 # Override standard doctype classes
 
 override_doctype_class = {
-	"Project": "milestoneksa.milestoneksa.project.Project"
+	"Project": "milestoneksa.milestoneksa.project.Project",
+	"Task": "milestoneksa.milestoneksa.task.Task",
 }
 
 # Document Events

@@ -1,0 +1,282 @@
+/* CEO Executive KPI Dashboard — Arabic RTL */
+.executive-dashboard {
+	direction: rtl;
+	font-family: "Tajawal", "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif;
+	color: #1f2937;
+	padding: 0.5rem 0 1.5rem;
+	max-width: 1400px;
+	margin: 0 auto;
+}
+
+.executive-dashboard * {
+	box-sizing: border-box;
+}
+
+.ed-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: flex-end;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+	padding: 0.75rem 1rem;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+}
+
+.ed-toolbar-title {
+	font-size: 1.25rem;
+	font-weight: 700;
+	margin: 0;
+}
+
+.ed-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: flex-end;
+}
+
+.ed-filters label {
+	display: flex;
+	flex-direction: column;
+	font-size: 0.75rem;
+	color: #64748b;
+	gap: 0.2rem;
+}
+
+.ed-filters input,
+.ed-filters select {
+	min-width: 140px;
+	padding: 0.35rem 0.5rem;
+	border: 1px solid #cbd5e1;
+	border-radius: 6px;
+	background: #fff;
+}
+
+.ed-btn {
+	padding: 0.4rem 0.9rem;
+	border: none;
+	border-radius: 6px;
+	background: #0f766e;
+	color: #fff;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.ed-btn:hover {
+	background: #0d9488;
+}
+
+.ed-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.ed-zone {
+	margin-bottom: 1.25rem;
+	padding: 1rem;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+}
+
+.ed-zone-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 1rem;
+	margin-bottom: 0.75rem;
+	border-bottom: 1px solid #f1f5f9;
+	padding-bottom: 0.5rem;
+}
+
+.ed-zone-header h2 {
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: 700;
+}
+
+.ed-freshness {
+	font-size: 0.75rem;
+	color: #64748b;
+}
+
+.ed-freshness.is-stale {
+	color: #b45309;
+}
+
+.ed-kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 0.75rem;
+}
+
+.ed-kpi {
+	padding: 0.75rem;
+	background: #f8fafc;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+}
+
+.ed-kpi.unavailable,
+.ed-kpi.stale {
+	background: #f1f5f9;
+	color: #64748b;
+	border-style: dashed;
+}
+
+.ed-kpi-label {
+	font-size: 0.8rem;
+	color: #64748b;
+	margin-bottom: 0.35rem;
+}
+
+.ed-kpi-value {
+	font-size: 1.15rem;
+	font-weight: 700;
+	word-break: break-word;
+}
+
+.ed-kpi-msg {
+	font-size: 0.75rem;
+	margin-top: 0.25rem;
+	color: #94a3b8;
+}
+
+.ed-table-wrap {
+	overflow-x: auto;
+}
+
+.ed-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+}
+
+.ed-table th,
+.ed-table td {
+	padding: 0.5rem 0.6rem;
+	border-bottom: 1px solid #e2e8f0;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.ed-table th {
+	background: #f8fafc;
+	font-weight: 600;
+	color: #475569;
+}
+
+.ed-table tr.clickable {
+	cursor: pointer;
+}
+
+.ed-table tr.clickable:hover {
+	background: #f0fdfa;
+}
+
+.ed-rag {
+	display: inline-block;
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: 50%;
+	vertical-align: middle;
+	margin-left: 0.35rem;
+}
+
+.ed-rag.green {
+	background: #16a34a;
+}
+.ed-rag.yellow {
+	background: #eab308;
+}
+.ed-rag.red {
+	background: #dc2626;
+}
+.ed-rag.grey {
+	background: #94a3b8;
+}
+
+.ed-alert {
+	padding: 0.75rem;
+	margin-bottom: 0.5rem;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+	cursor: pointer;
+	background: #fff;
+}
+
+.ed-alert:hover {
+	background: #f8fafc;
+}
+
+.ed-alert.red {
+	border-right: 4px solid #dc2626;
+}
+
+.ed-alert.yellow {
+	border-right: 4px solid #eab308;
+}
+
+.ed-alert-problem {
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.ed-alert-meta {
+	font-size: 0.8rem;
+	color: #64748b;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.ed-loading,
+.ed-empty,
+.ed-error {
+	padding: 2rem 1rem;
+	text-align: center;
+	color: #64748b;
+}
+
+.ed-error {
+	color: #b91c1c;
+	background: #fef2f2;
+	border-radius: 8px;
+}
+
+.ed-note {
+	font-size: 0.8rem;
+	color: #64748b;
+	margin-top: 0.5rem;
+}
+
+.unavailable-cell {
+	color: #94a3b8;
+	font-style: italic;
+}
+
+@media (max-width: 768px) {
+	.ed-toolbar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.ed-filters {
+		width: 100%;
+	}
+	.ed-filters label {
+		flex: 1;
+		min-width: 120px;
+	}
+}
+
+/* auto stubs */
+.green {}
+.grey {}
+.is-stale {}
+.red {}
+.stale {}
+.unavailable {}
+.yellow {}

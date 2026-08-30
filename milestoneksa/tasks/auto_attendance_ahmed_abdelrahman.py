@@ -12,8 +12,21 @@ from frappe.utils import get_datetime, getdate, nowdate
 EMPLOYEE = "HR-EMP-00004"
 SHIFT = "Normal"
 DEVICE_ID = "Auto Attendance"
-DEFAULT_LATITUDE = 41.110901
-DEFAULT_LONGITUDE = 28.767785
+REFERENCE_CHECKIN = "EMP-CKIN-06-2026-000076"
+DEFAULT_LATITUDE = 41.1089371
+DEFAULT_LONGITUDE = 28.7635965
+DEFAULT_GEOLOCATION = (
+	'{"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {}, '
+	'"geometry": {"type": "Point", "coordinates": [28.7635965, 41.1089371]}}]}'
+)
+
+
+def checkin_location() -> dict:
+	return {
+		"latitude": DEFAULT_LATITUDE,
+		"longitude": DEFAULT_LONGITUDE,
+		"geolocation": DEFAULT_GEOLOCATION,
+	}
 
 
 def is_saudi_workday(d: date) -> bool:
@@ -83,6 +96,7 @@ def _attendance_name(attendance_date: date) -> str | None:
 
 def _create_checkin(attendance_date: date, checkin_time: datetime, log_type: str) -> str:
 	emp = _employee_details()
+	location = checkin_location()
 	doc = frappe.get_doc(
 		{
 			"doctype": "Employee Checkin",
@@ -91,9 +105,8 @@ def _create_checkin(attendance_date: date, checkin_time: datetime, log_type: str
 			"time": checkin_time,
 			"log_type": log_type,
 			"device_id": DEVICE_ID,
-			"latitude": DEFAULT_LATITUDE,
-			"longitude": DEFAULT_LONGITUDE,
 			"skip_auto_attendance": 1,
+			**location,
 		}
 	)
 	doc.insert(ignore_permissions=True)
@@ -250,3 +263,34 @@ def fix_employee_month_attendance(year: int | None = None, month: int | None = N
 
 	frappe.db.commit()
 	return results
+
+
+def sync_employee_checkin_locations() -> dict:
+	"""Align all Ahmed check-in coordinates with REFERENCE_CHECKIN."""
+	location = checkin_location()
+	names = frappe.get_all("Employee Checkin", filters={"employee": EMPLOYEE}, pluck="name")
+	updated = 0
+
+	for name in names:
+		frappe.db.set_value(
+			"Employee Checkin",
+			name,
+			location,
+			update_modified=False,
+		)
+		updated += 1
+
+	frappe.db.commit()
+	return {
+		"employee": EMPLOYEE,
+		"reference_checkin": REFERENCE_CHECKIN,
+		"updated": updated,
+		**location,
+	}
+
+
+def ensure_scheduled_jobs():
+	"""Register cron jobs after deploy (sync_jobs is normally run on migrate)."""
+	from frappe.core.doctype.scheduled_job_type.scheduled_job_type import sync_jobs
+
+	sync_jobs()

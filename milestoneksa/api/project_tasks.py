@@ -17,10 +17,81 @@ def _date_diff_inclusive(start: Optional[str], end: Optional[str]) -> Optional[i
         return None
 
 
+def _parse_assigned_users(raw) -> List[str]:
+    if not raw:
+        return []
+    if isinstance(raw, (list, tuple)):
+        return [cstr(x) for x in raw if cstr(x)]
+    try:
+        parsed = json.loads(raw) if isinstance(raw, str) else raw
+    except Exception:
+        return []
+    if isinstance(parsed, list):
+        return [cstr(x) for x in parsed if cstr(x)]
+    return []
+
+
+def _assignee_display_names(users: Iterable[str]) -> List[str]:
+    names = []
+    for user in users or []:
+        names.append(frappe.utils.get_fullname(user) or cstr(user))
+    return names
+
+
+def _normalize_assign_to(assign_to) -> List[str]:
+    if assign_to is None or assign_to == "":
+        return []
+    if isinstance(assign_to, str):
+        try:
+            parsed = frappe.parse_json(assign_to)
+            assign_to = parsed
+        except Exception:
+            assign_to = [assign_to]
+    if not isinstance(assign_to, (list, tuple)):
+        assign_to = [assign_to]
+    return list(dict.fromkeys([cstr(user) for user in assign_to if cstr(user)]))
+
+
+def _apply_task_assignments(task_name: str, assign_to) -> None:
+    from frappe.desk.form.assign_to import add as assign_add
+    from frappe.desk.form.assign_to import remove as assign_remove
+
+    wanted = set(_normalize_assign_to(assign_to))
+    current = set(
+        frappe.get_all(
+            "ToDo",
+            filters={
+                "reference_type": "Task",
+                "reference_name": task_name,
+                "status": "Open",
+            },
+            pluck="allocated_to",
+        )
+        or []
+    )
+    for user in wanted - current:
+        assign_add(
+            {
+                "assign_to": [user],
+                "doctype": "Task",
+                "name": task_name,
+            }
+        )
+    for user in current - wanted:
+        assign_remove("Task", task_name, user)
+
+
 def _treeify(tasks: Iterable[frappe._dict]) -> List[frappe._dict]:
+    task_list = list(tasks)
+    by_name = {task.name: task for task in task_list}
     children: Dict[Optional[str], List[frappe._dict]] = defaultdict(list)
-    for task in tasks:
+
+    for task in task_list:
         parent = task.parent_task or None
+        # Promote orphans (missing parent) to roots so they remain visible.
+        if parent and parent not in by_name:
+            parent = None
+            task.parent_task = None
         children[parent].append(task)
 
     for bucket in children.values():
@@ -42,22 +113,209 @@ def _treeify(tasks: Iterable[frappe._dict]) -> List[frappe._dict]:
 def _get_currency_for_project(project: str) -> Optional[str]:
     company = frappe.db.get_value("Project", project, "company")
     if not company:
-        return frappe.defaults.get_default("currency")
+        return frappe.defaults.get_defaults().get("currency")
     return frappe.get_cached_value("Company", company, "default_currency")
+
+
+def _progress_from_status(status: Optional[str]) -> int:
+    return 100 if cstr(status) in ("Completed", "Cancelled") else 0
 
 
 def _serialize_task(row: frappe._dict) -> frappe._dict:
     row.duration_days = _date_diff_inclusive(row.exp_start_date, row.exp_end_date)
-    
+
     # Use custom actual dates if available, otherwise use timesheet dates
     custom_actual_duration = _date_diff_inclusive(row.custom_actual_start_date, row.custom_actual_end_date)
     timesheet_duration = _date_diff_inclusive(row.act_start_date, row.act_end_date)
     row.actual_duration_days = custom_actual_duration or timesheet_duration
-    
+
     row.planned_hours = flt(row.expected_time)
     row.actual_hours = flt(row.actual_time)
     row.total_costing_amount = flt(row.total_costing_amount)
+    row.is_group = cint(row.is_group)
+    row.progress = flt(row.progress) if row.get("progress") is not None else _progress_from_status(row.status)
+    assigned_to = _parse_assigned_users(row.get("_assign"))
+    row.assigned_to = assigned_to
+    row.assigned_to_names = _assignee_display_names(assigned_to)
     return row
+
+
+TASK_CLIENT_FIELDS = [
+    "name",
+    "subject",
+    "status",
+    "priority",
+    "task_weight",
+    "parent_task",
+    "is_group",
+    "exp_start_date",
+    "exp_end_date",
+    "expected_time",
+    "act_start_date",
+    "act_end_date",
+    "actual_time",
+    "total_costing_amount",
+    "description",
+    "idx",
+    "lft",
+    "rgt",
+    "progress",
+    "modified",
+    "custom_actual_start_date",
+    "custom_actual_end_date",
+    "project",
+    "_assign",
+]
+
+
+def _serialize_task_for_client(row) -> dict:
+    data = frappe._dict(row)
+    _serialize_task(data)
+    return {
+        "name": data.name,
+        "subject": data.subject,
+        "status": data.status,
+        "priority": data.priority,
+        "task_weight": flt(data.task_weight),
+        "parent_task": data.parent_task or None,
+        "is_group": cint(data.is_group),
+        "exp_start_date": data.exp_start_date,
+        "exp_end_date": data.exp_end_date,
+        "expected_time": flt(data.expected_time),
+        "planned_hours": flt(data.planned_hours),
+        "act_start_date": data.act_start_date,
+        "act_end_date": data.act_end_date,
+        "actual_time": flt(data.actual_time),
+        "actual_hours": flt(data.actual_hours),
+        "total_costing_amount": flt(data.total_costing_amount),
+        "description": data.description,
+        "idx": cint(data.idx),
+        "lft": cint(data.lft),
+        "rgt": cint(data.rgt) if data.get("rgt") is not None else None,
+        "progress": flt(data.progress),
+        "modified": cstr(data.modified) if data.get("modified") else None,
+        "custom_actual_start_date": data.custom_actual_start_date,
+        "custom_actual_end_date": data.custom_actual_end_date,
+        "duration_days": data.duration_days,
+        "actual_duration_days": data.actual_duration_days,
+        "wbs": data.get("wbs"),
+        "project": data.get("project"),
+        "assigned_to": list(data.assigned_to or []),
+        "assigned_to_names": list(data.assigned_to_names or []),
+    }
+
+
+def _fetch_serialized_tasks(names: Iterable[str]) -> List[dict]:
+    names = [cstr(name) for name in names if cstr(name)]
+    if not names:
+        return []
+    rows = frappe.get_all(
+        "Task",
+        filters={"name": ["in", names]},
+        fields=TASK_CLIENT_FIELDS,
+        limit_page_length=0,
+    )
+    by_name = {row.name: _serialize_task_for_client(row) for row in rows}
+    return [by_name[name] for name in names if name in by_name]
+
+
+def _build_wbs_map(project: str) -> Dict[str, str]:
+    rows = frappe.get_all(
+        "Task",
+        filters={"project": project},
+        fields=["name", "parent_task", "idx", "lft", "subject"],
+        order_by="lft asc",
+        limit_page_length=0,
+    )
+    ordered = _treeify([frappe._dict(row) for row in rows])
+    return {row.name: row.wbs for row in ordered}
+
+
+def _renumber_siblings(project: str, parent_task: Optional[str]) -> dict:
+    filters = {"project": project}
+    if parent_task:
+        filters["parent_task"] = parent_task
+    else:
+        filters["parent_task"] = ["is", "not set"]
+
+    siblings = frappe.get_all(
+        "Task",
+        filters=filters,
+        fields=["name", "idx", "lft", "subject"],
+        order_by="idx asc, lft asc, subject asc",
+        limit_page_length=0,
+    )
+    ordered_names = [row.name for row in siblings]
+    idx_by_name = {}
+    for idx, name in enumerate(ordered_names, start=1):
+        idx_by_name[name] = idx
+        frappe.db.set_value("Task", name, "idx", idx, update_modified=False)
+    return {
+        "parent_task": parent_task,
+        "ordered_names": ordered_names,
+        "idx_by_name": idx_by_name,
+    }
+
+
+def _children_meta_for(names: Iterable[str]) -> dict:
+    meta = {}
+    for name in [cstr(n) for n in names if cstr(n)]:
+        direct = frappe.db.count("Task", {"parent_task": name})
+        meta[name] = {
+            "direct_child_count": direct,
+            "is_group": 1 if direct else cint(frappe.db.get_value("Task", name, "is_group")),
+        }
+    return meta
+
+
+def _project_patch_fragment(project: Optional[str]) -> Optional[dict]:
+    if not project or not frappe.db.exists("Project", project):
+        return None
+    percent = frappe.db.get_value("Project", project, "percent_complete")
+    return {"name": project, "percent_complete": flt(percent)}
+
+
+def _build_mutation_patch(
+    project: Optional[str],
+    *,
+    task_name: Optional[str] = None,
+    task_names: Optional[Iterable[str]] = None,
+    affected_parent_names: Optional[Iterable[str]] = None,
+    removed: Optional[Iterable[str]] = None,
+    sibling_orders: Optional[List[dict]] = None,
+    errors: Optional[List[str]] = None,
+) -> dict:
+    names = []
+    if task_name:
+        names.append(task_name)
+    if task_names:
+        names.extend(list(task_names))
+    names = list(dict.fromkeys([cstr(n) for n in names if cstr(n)]))
+
+    parent_names = list(dict.fromkeys([cstr(n) for n in (affected_parent_names or []) if cstr(n)]))
+    tasks = _fetch_serialized_tasks(names)
+    affected_parents = _fetch_serialized_tasks(parent_names)
+
+    wbs_by_name = _build_wbs_map(project) if project else {}
+    for row in tasks + affected_parents:
+        row["wbs"] = wbs_by_name.get(row["name"])
+
+    children_meta = _children_meta_for([row["name"] for row in tasks + affected_parents])
+
+    patch = {
+        "ok": True,
+        "task": tasks[0] if len(tasks) == 1 and task_name else (tasks[0] if tasks and task_name else None),
+        "tasks": tasks,
+        "affected_parents": affected_parents,
+        "removed": [cstr(n) for n in (removed or []) if cstr(n)],
+        "sibling_order": (sibling_orders or [None])[0] if sibling_orders and len(sibling_orders) == 1 else None,
+        "sibling_orders": sibling_orders or [],
+        "wbs_by_name": wbs_by_name,
+        "children_meta": children_meta,
+        "project": _project_patch_fragment(project),
+        "errors": errors or [],
+    }
+    return patch
 
 
 def _get_task_meta_options() -> Tuple[List[str], List[str]]:
@@ -68,10 +326,6 @@ def _get_task_meta_options() -> Tuple[List[str], List[str]]:
     status_options = [opt for opt in (status_field.options or "").split("\n") if opt]
     priority_options = [opt for opt in (priority_field.options or "").split("\n") if opt]
     return status_options, priority_options
-
-
-def _progress_from_status(status: Optional[str]) -> int:
-    return 100 if cstr(status) in ("Completed", "Cancelled") else 0
 
 
 def _expand_parent_planned_bounds(task_doc):
@@ -118,38 +372,16 @@ def get_project_tasks(project: str):
     if not project:
         frappe.throw(_("Project is required"))
 
-    fields = [
-        "name",
-        "subject",
-        "status",
-        "priority",
-        "task_weight",
-        "parent_task",
-        "is_group",
-        "exp_start_date",
-        "exp_end_date",
-        "expected_time",
-        "act_start_date",
-        "act_end_date",
-        "actual_time",
-        "total_costing_amount",
-        "description",
-        "idx",
-        "lft",
-        "custom_actual_start_date",
-        "custom_actual_end_date",
-    ]
-
     records = frappe.db.get_list(
         "Task",
         filters={"project": project},
-        fields=fields,
+        fields=TASK_CLIENT_FIELDS,
         order_by="lft asc",
         as_list=False,
     )
 
     tasks = [_serialize_task(frappe._dict(row)) for row in records]
-    ordered = _treeify(tasks)
+    ordered = [_serialize_task_for_client(row) for row in _treeify(tasks)]
     currency = _get_currency_for_project(project)
     status_options, priority_options = _get_task_meta_options()
 
@@ -165,11 +397,17 @@ def _get_task_descendants(task_name: str) -> List[frappe._dict]:
     if not task_name:
         return []
 
+    project = frappe.db.get_value("Task", task_name, "project")
+    filters = {"parent_task": ["is", "set"]}
+    if project:
+        filters["project"] = project
+
     all_children = frappe.get_all(
         "Task",
-        filters={"parent_task": ["is", "set"]},
-        fields=["name", "subject", "status", "parent_task", "is_group", "idx", "lft"],
+        filters=filters,
+        fields=["name", "subject", "status", "parent_task", "is_group", "idx", "lft", "project"],
         order_by="idx asc, lft asc, subject asc",
+        limit_page_length=0,
     )
     children_by_parent: Dict[str, List[frappe._dict]] = defaultdict(list)
     for child in all_children:
@@ -241,9 +479,9 @@ def _complete_parent_task_and_descendants(task_name: str, commit: bool = True):
 
     for child in sorted(children, key=lambda row: cint(row.level), reverse=True):
         if child.parent_task:
-            recalculate_parent_task(child.parent_task, propagate=False)
+            recalculate_parent_task(child.parent_task, propagate=0, commit=0)
     if task.parent_task:
-        recalculate_parent_task(task.parent_task, propagate=True)
+        recalculate_parent_task(task.parent_task, propagate=1, commit=0)
     if task.project:
         _update_project_percent_complete(task.project)
 
@@ -328,8 +566,32 @@ def create_project_task(project: str, task=None):
         frappe.throw(_("Subject is required"))
 
     doc.insert()
+
+    assign_to = task.get("assign_to")
+    if assign_to is None:
+        assign_to = task.get("assigned_to")
+    if assign_to is not None:
+        _apply_task_assignments(doc.name, assign_to)
+
+    sibling_order = _renumber_siblings(project, parent_task)
+    affected_parents = []
+    if parent_task:
+        recalculate_parent_task(parent_task, propagate=1, commit=0)
+        # Collect ancestor chain
+        cursor = parent_task
+        while cursor:
+            affected_parents.append(cursor)
+            cursor = frappe.db.get_value("Task", cursor, "parent_task")
+
+    _update_project_percent_complete(project)
     frappe.db.commit()
-    return doc.name
+
+    return _build_mutation_patch(
+        project,
+        task_name=doc.name,
+        affected_parent_names=affected_parents,
+        sibling_orders=[sibling_order],
+    )
 
 
 @frappe.whitelist()
@@ -344,6 +606,9 @@ def update_project_task(task_name: str, updates=None):
         updates = frappe.parse_json(updates)
 
     completion_acknowledged = cint(updates.pop("completion_acknowledged", 0))
+    assign_to = updates.pop("assign_to", None)
+    if assign_to is None and "assigned_to" in updates:
+        assign_to = updates.pop("assigned_to")
 
     allowed_fields = {
         "subject",
@@ -362,6 +627,7 @@ def update_project_task(task_name: str, updates=None):
     }
 
     doc = frappe.get_doc("Task", task_name)
+    old_parent_task = doc.parent_task or None
     acknowledged_parent_completion = False
     if cstr(updates.get("status")) == "Completed" and doc.status != "Completed":
         child_count = frappe.db.count("Task", {"parent_task": doc.name})
@@ -393,8 +659,23 @@ def update_project_task(task_name: str, updates=None):
         elif key == "parent_task":
             value = value or None
             _ensure_parent_task(value, doc.project, doc.name)
-        elif key in ("exp_start_date", "exp_end_date", "custom_actual_start_date", "custom_actual_end_date") and not value:
-            value = None
+        elif key in ("exp_start_date", "exp_end_date", "custom_actual_start_date", "custom_actual_end_date"):
+            if not value:
+                value = None
+            else:
+                try:
+                    value = getdate(value)
+                except Exception:
+                    frappe.throw(_("Invalid date for {0}").format(key))
+
+        if key in ("exp_start_date", "exp_end_date", "custom_actual_start_date", "custom_actual_end_date"):
+            old_value = doc.get(key)
+            old_cmp = getdate(old_value) if old_value else None
+            new_cmp = getdate(value) if value else None
+            if old_cmp != new_cmp:
+                doc.set(key, value)
+                dirty = True
+            continue
 
         if doc.get(key) != value:
             doc.set(key, value)
@@ -416,22 +697,64 @@ def update_project_task(task_name: str, updates=None):
         dirty = True
 
     if dirty:
+        # Expand parents in DB first so ERPNext child-vs-parent date validation passes.
         _expand_parent_planned_bounds(doc)
         doc.save()
 
+
+    if assign_to is not None:
+        _apply_task_assignments(doc.name, assign_to)
+
     if acknowledged_parent_completion:
-        _complete_parent_task_and_descendants(doc.name, commit=False)
+        completion_result = _complete_parent_task_and_descendants(doc.name, commit=False)
         dirty = True
+    else:
+        completion_result = None
 
     if dirty:
+        # Recalculate old and new parent chains
+        parents_to_recalc = []
+        if old_parent_task:
+            parents_to_recalc.append(old_parent_task)
+        if doc.parent_task and doc.parent_task not in parents_to_recalc:
+            parents_to_recalc.append(doc.parent_task)
+
+        sibling_orders = []
+        if old_parent_task != (doc.parent_task or None):
+            sibling_orders.append(_renumber_siblings(doc.project, old_parent_task or None))
+            sibling_orders.append(_renumber_siblings(doc.project, doc.parent_task or None))
+
+        if not acknowledged_parent_completion:
+            for parent_name in parents_to_recalc:
+                recalculate_parent_task(parent_name, propagate=1, commit=0)
+
+        affected_parents = []
+        for parent_name in parents_to_recalc:
+            cursor = parent_name
+            while cursor:
+                if cursor not in affected_parents:
+                    affected_parents.append(cursor)
+                cursor = frappe.db.get_value("Task", cursor, "parent_task")
+
+        _update_project_percent_complete(doc.project)
         frappe.db.commit()
 
-        # Recalculate parent metrics/status up the hierarchy if this task has a parent
-        if doc.parent_task and not acknowledged_parent_completion:
-            recalculate_parent_task(doc.parent_task, propagate=True)
-        _update_project_percent_complete(doc.project)
+        task_names = [doc.name]
+        if completion_result:
+            # Include completed descendants for silent client merge
+            descendants = _get_task_descendants(doc.name)
+            task_names.extend([row.name for row in descendants])
+            task_names = list(dict.fromkeys(task_names))
 
-    return doc.name
+        return _build_mutation_patch(
+            doc.project,
+            task_name=doc.name,
+            task_names=task_names,
+            affected_parent_names=affected_parents,
+            sibling_orders=sibling_orders,
+        )
+
+    return _build_mutation_patch(doc.project, task_name=doc.name)
 
 
 @frappe.whitelist()
@@ -522,12 +845,24 @@ def reorder_project_task_siblings(project: str, parent_task: Optional[str], task
     for idx, name in enumerate(task_names, start=1):
         frappe.db.set_value("Task", name, "idx", idx, update_modified=False)
 
+    sibling_order = {
+        "parent_task": parent_task,
+        "ordered_names": task_names,
+        "idx_by_name": {name: idx for idx, name in enumerate(task_names, start=1)},
+    }
     frappe.db.commit()
-    return {"updated": len(task_names), "parent_task": parent_task}
+    patch = _build_mutation_patch(
+        project,
+        task_names=task_names,
+        sibling_orders=[sibling_order],
+    )
+    patch["updated"] = len(task_names)
+    patch["parent_task"] = parent_task
+    return patch
 
 
 @frappe.whitelist()
-def recalculate_parent_task(parent_task_name: str, propagate: int = 0):
+def recalculate_parent_task(parent_task_name: str, propagate: int = 0, commit: int = 1):
     """Recalculate parent task metrics based on children tasks"""
     if not parent_task_name:
         return
@@ -589,15 +924,19 @@ def recalculate_parent_task(parent_task_name: str, propagate: int = 0):
     
     _expand_parent_planned_bounds(parent)
     parent.save()
-    frappe.db.commit()
 
     if cint(propagate) and parent.parent_task:
-        recalculate_parent_task(parent.parent_task, propagate=True)
-    
+        recalculate_parent_task(parent.parent_task, propagate=1, commit=0)
+
+    if cint(commit):
+        frappe.db.commit()
+
     return {
         "parent": parent.name,
         "children_count": len(children),
-        "total_planned_hours": parent.expected_time
+        "total_planned_hours": parent.expected_time,
+        "status": parent.status,
+        "progress": parent.progress,
     }
 
 
@@ -799,35 +1138,81 @@ def delete_project_tasks(task_names, force: int = 1, delete_connected: int = 0):
                 to_delete |= dep_parents
                 to_delete |= _expand_descendants(dep_parents)
 
-    # Sort by lft desc to delete children first (avoid nested set issues)
-    lft_rows = frappe.get_all("Task", filters={"name": ["in", list(to_delete)]}, fields=["name", "lft"], limit_page_length=0)
-    lft_map = {r.name: (r.lft or 0) for r in lft_rows}
+    # Capture project + parents before deletion for silent client patch
+    pre_rows = frappe.get_all(
+        "Task",
+        filters={"name": ["in", list(to_delete)]},
+        fields=["name", "lft", "parent_task", "project"],
+        limit_page_length=0,
+    )
+    lft_map = {r.name: (r.lft or 0) for r in pre_rows}
+    parent_map = {r.name: (r.parent_task or None) for r in pre_rows}
+    project = next((r.project for r in pre_rows if r.project), None)
     ordered = sorted(list(to_delete), key=lambda n: (lft_map.get(n, 0), n), reverse=True)
 
     deleted: list[str] = []
     errors: list[str] = []
+    surviving_parents = set()
 
     for name in ordered:
+        parent_name = parent_map.get(name)
         try:
-            # Force delete bypasses link checks; user explicitly requested "forced"
             frappe.delete_doc("Task", name, force=force, ignore_permissions=True)
             deleted.append(name)
+            if parent_name:
+                surviving_parents.add(parent_name)
         except frappe.DoesNotExistError:
-            # Ignore if already deleted by cascade
             continue
         except Exception as e:
             msg = f"Failed to delete task {name}: {str(e)}"
             errors.append(msg)
             frappe.log_error(msg, "Delete Task Error")
 
+    # Clean dependency rows that pointed at deleted tasks so parent save does not fail
+    if deleted:
+        frappe.db.delete("Task Depends On", {"task": ["in", deleted]})
+
+    # Do not recalc parents that were also deleted
+    surviving_parents = {p for p in surviving_parents if p not in set(deleted) and frappe.db.exists("Task", p)}
+
+    for parent_name in list(surviving_parents):
+        try:
+            recalculate_parent_task(parent_name, propagate=1, commit=0)
+        except Exception as e:
+            # Parent save can fail if unrelated link rows are dirty; still return the delete patch.
+            errors.append(f"Failed to recalculate parent {parent_name}: {str(e)}")
+            frappe.log_error(str(e), "Delete Task Parent Recalc")
+
+    expanded_parents = []
+    for parent_name in surviving_parents:
+        cursor = parent_name
+        while cursor:
+            if cursor not in expanded_parents and frappe.db.exists("Task", cursor):
+                expanded_parents.append(cursor)
+            cursor = frappe.db.get_value("Task", cursor, "parent_task") if frappe.db.exists("Task", cursor) else None
+
+    if project:
+        try:
+            _update_project_percent_complete(project)
+        except Exception:
+            pass
+
     frappe.db.commit()
 
-    return {
-        "requested": roots,
-        "delete_connected": bool(delete_connected),
-        "force": bool(force),
-        "deleted_count": len(deleted),
-        "deleted_tasks": deleted,
-        "errors": errors,
-    }
+    patch = _build_mutation_patch(
+        project,
+        removed=deleted,
+        affected_parent_names=expanded_parents,
+        errors=errors,
+    )
+    patch.update(
+        {
+            "requested": roots,
+            "delete_connected": bool(delete_connected),
+            "force": bool(force),
+            "deleted_count": len(deleted),
+            "deleted_tasks": deleted,
+        }
+    )
+    return patch
 
